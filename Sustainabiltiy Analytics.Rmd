@@ -10,7 +10,7 @@ library(readxl) #install packages first if not done so already
 library(dplyr)
 library(lubridate)
 
-setwd(dirname(rstudioapi::getSourceEditorContext()$path)) 
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
 
 ```{r, importing power prices, warning = F }
