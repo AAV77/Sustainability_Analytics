@@ -1,0 +1,105 @@
+---
+title: "Sustainability Analytics"
+author: "Energetic Energy Analysts"
+date: "2024-08-03"
+output: html_document
+---
+
+```{r, include = F, warning = F}
+library(readxl) #install packages first if not done so already
+library(dplyr)
+library(lubridate)
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) 
+```
+
+```{r, importing power prices, warning = F }
+sheets_after_2015 <- c("EnergieUebersichtCH-2015.xls","EnergieUebersichtCH-2016.xls", "EnergieUebersichtCH-2017.xls",
+                       "EnergieUebersichtCH-2018.xls", "EnergieUebersichtCH-2019.xls",
+                       "EnergieUebersichtCH-2020.xls")
+
+# Initialize an empty list to store data frames
+data_list <- list()
+
+# Loop through the sheets and read each one
+for (s in sheets_after_2015) {
+  # Read the Excel file
+  df <- read_xls(s, sheet = "Zeitreihen0h15")
+  df <- df %>% select (1, 22:25) 
+  
+  
+  # Convert the timestamp column
+  df[[1]] <- as.numeric(df[[1]])
+  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-30", tz = "UTC")
+  
+  # Select and reorder columns
+  df <- df %>% select(Timestamp, 2, 3, 4, 5) %>% slice(-1)
+  
+  # Store the data frame in the list
+  data_list[[s]] <- df
+}
+
+# Combine all data frames in the list into one
+combined_data <- bind_rows(data_list)
+
+```
+
+```{r, proxy: volatility energy prices 1:00h useable}
+
+#taking max-min prices in absolute for secondary and tertiary
+combined_data <- combined_data %>% 
+   mutate(across(c(2:5), as.numeric))  %>%
+   mutate(secondary_range = abs(.[[2]] - (.[[3]] * -1)    )) %>% 
+   mutate(tertiary_range = abs(.[[4]] - (.[[5]] * -1)    ))
+
+#averaging this number for 1h to make it useable later
+
+# Compute hourly averages for the ranges
+hourly_averages <- combined_data %>%
+  mutate(hour = floor_date(Timestamp, "hour")) %>%  # Extract the hour part
+  group_by(hour) %>%                                # Group by hour
+  summarise(
+    avg_secondary_price_range = mean(secondary_range, na.rm = TRUE),  # Compute hourly average for secondary_range
+    avg_tertiary_price_range = mean(tertiary_range, na.rm = TRUE)     # Compute hourly average for tertiary_range
+  ) %>% 
+  rename(Timestamp = hour)
+```
+
+```{r, importing renwable share, include = F }
+
+
+ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
+ren_gen <- ren_gen %>% select(-1) %>%   
+  mutate(Timestamp= ymd_hms(cet_cest_timestamp, tz = "Europe/Zurich"))
+```
+
+```{r, merging, include= FALSE}
+
+d <- full_join(hourly_averages, ren_gen, by = "Timestamp")
+
+```
+
+```{r, cleaning up workspace, include = FALSE}
+# when runnig the script later, please excecute the line below. This removes
+# the clutter from the data cleaning process
+
+#remove(combined_data, data_list, df, ren_gen)
+
+```
+
+## Sources
+
+### Electricity Prices
+
+<https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
+
+### Generation Share
+
+<https://data.open-power-system-data.org/time_series> 
+
+```{r}
+#lm.1<-lm(d$avg_secondary_price_range~d$CH_solar_generation_actual)
+#print(summary(lm.1))
+```
+
+
