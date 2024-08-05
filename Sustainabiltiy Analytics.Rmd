@@ -87,7 +87,30 @@ d <- full_join(hourly_averages, ren_gen, by = "Timestamp")
 
 ```
 
-## Sources
+# Introduction
+
+Governments and scientists around the world largely agree on the need for a low-carbon electricity grid. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels. A substrate of RES are so called Variable-RES (VRES), which are electricity sources who's production cannot be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources who's production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can present a challange, it is far more manageable than VRES.
+
+The lack of control over production with VRES presents a huge challange to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
+
+Worst yet for all energy producer, the addition of electricity from VRES has the possibility to:
+
+1.   Drastically lower electricity prices.
+2.  Increase volatility.
+
+The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price. If they cannot profit - maximize, they will loss - minimize.
+
+The second claim is the case because meteorological events tend to be fairly consistent across an area. When one wind / solar farm is producing, so are the ones around it. This means there is huge downward pressure on prices during periods of favorable VRES production and none at all during unfavorable conditions.
+
+## Relevance
+
+Policy \> what effects would there be with growing renewable penetration be on price volatility
+
+financing feed in tariffs.
+
+## Literature Review
+
+# Sources
 
 ### Electricity Prices
 
@@ -95,11 +118,9 @@ d <- full_join(hourly_averages, ren_gen, by = "Timestamp")
 
 ### Generation Share
 
-<https://data.open-power-system-data.org/time_series> 
+<https://data.open-power-system-data.org/time_series>
 
 ```{r}
 #lm.1<-lm(d$avg_secondary_price_range~d$CH_solar_generation_actual)
 #print(summary(lm.1))
 ```
-
-
