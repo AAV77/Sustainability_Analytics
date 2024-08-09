@@ -1,0 +1,179 @@
+---
+title: "Statistical Evaluation of Variable Renewable Energy Source's Contribution to the Variability of Swiss Electricity Prices 2015-2020"
+author: "Del Conte, Küng, Van Lengerich, Vayloyan "
+date: "2024-08-03"
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+bibliography: references.bib
+---
+
+```{r, include = F, warning = F}
+library(readxl) #install packages first if not done so already
+library(dplyr)
+library(lubridate)
+
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
+```
+
+```{r, importing power prices, warning = F, include= F }
+sheets_after_2015 <- c("EnergieUebersichtCH-2015.xls",
+                       "EnergieUebersichtCH-2016.xls", 
+                       "EnergieUebersichtCH-2017.xls",
+                       "EnergieUebersichtCH-2018.xls", 
+                       "EnergieUebersichtCH-2019.xls",
+                       "EnergieUebersichtCH-2020.xls")
+
+# Empty list to store data frames
+data_list <- list()
+
+# Loop through the sheets and read each one
+for (s in sheets_after_2015) {
+  # Read the Excel file
+  df <- read_xls(s, sheet = "Zeitreihen0h15")
+  df <- df %>% select (1, 22:25) 
+  
+  # Convert the timestamp column
+  df[[1]] <- as.numeric(df[[1]])
+  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-30", tz = "Europe/Zurich")
+  
+  # Select and reorder columns
+  df <- df %>% select(Timestamp, 2, 3, 4, 5) %>% slice(-1)
+  
+  # Store the data frame in the list
+  data_list[[s]] <- df
+}
+
+# Combine all data frames in the list into one
+combined_data <- bind_rows(data_list)
+
+```
+
+```{r, proxy: volatility energy prices 1:00h useable, warning = F, include= F}
+
+#taking max-min prices in absolute for secondary and tertiary
+combined_data <- combined_data %>% 
+   mutate(across(c(2:5), as.numeric))  %>%
+   mutate(secondary_range = abs(.[[2]] - (.[[3]] * -1)    )) %>% 
+   mutate(tertiary_range = abs(.[[4]] - (.[[5]] * -1)    ))
+
+#averaging this number for 1h to make it useable later
+
+# Compute hourly averages for the ranges
+hourly_averages <- combined_data %>%
+  mutate(hour = floor_date(Timestamp, "hour")) %>%  # Extract the hour part
+  group_by(hour) %>%                                # Group by hour
+  summarise(
+    avg_secondary_price_range = mean(secondary_range, na.rm = TRUE),  # Compute hourly average for secondary_range
+    avg_tertiary_price_range = mean(tertiary_range, na.rm = TRUE)     # Compute hourly average for tertiary_range
+  ) %>% 
+  rename(Timestamp = hour)
+```
+
+```{r, importing renwable share, include = F , warning = F, include= F}
+ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
+ren_gen <- ren_gen %>% select(-1) %>%   
+  mutate(Timestamp= ymd_hms(cet_cest_timestamp, tz = "Europe/Zurich")) %>%   mutate(VRES_percent = (CH_solar_generation_actual+CH_wind_onshore_generation_actual)/CH_load_actual_entsoe_transparency)
+
+
+
+
+```
+
+```{r, merging, include= FALSE, warning = F}
+d <- full_join(hourly_averages, ren_gen, by = "Timestamp")
+d <- d %>% select (1,2,3,11, everything()) %>% select (-5)   # moving most important col forward
+
+
+
+```
+
+```{r, cleaning up workspace, include = FALSE, warning = F}
+# when runnig the script later, please excecute the line below. This removes
+# the clutter from the data cleaning process
+
+remove(combined_data, data_list, df, ren_gen, hourly_averages)
+
+```
+
+\newpage
+
+# Introduction
+
+Governments and scientists around the world largely agree on the need for a low-carbon electricity grid. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels. A substrate of RES are so called Variable-RES (VRES), which are electricity sources who's production cannot be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources who's production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can present a challange, it is far more manageable than VRES.
+
+The lack of control over production with VRES presents a huge challange to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
+
+Worst yet for all energy producer, the addition of electricity from VRES has the possibility to:
+
+1.  Drastically lower electricity prices.
+2.  Increase volatility.
+
+The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price. If they cannot profit - maximize, they will loss - minimize.
+
+The second claim is the case because meteorological events tend to be fairly consistent across an area. When one wind / solar farm is producing, so are the ones around it. This means there is huge downward pressure on prices during periods of favorable VRES production and none at all during unfavorable conditions.
+
+## Relevance
+
+Policymakers would be interested in these results, particularly those countries considering feed-in-tariffs (FIT).
+
+FIT - paying a fixed price for renewable energy, if the price is volatile, government's expenditure will also be.
+
+Consumers of energy (so most people), will also want to know how prices could fluctuate in the future.
+
+Providers of energy storage, who require volatility in prices to make.
+
+*more will be added here*
+
+## Literature Review
+
+Although generally speaking the academic literature identifies increases V-RES sources as being correlated with volatile prices, it is unclear whether these effects are generalizable to the Swiss grid without further research. A number of studies find an increase in variability as V-RES penetration increases. Amongst them: @pereiradasilva2019 who use EGARCH time series and regression while studying the Iberian power market; @frauendorfer2018 who find that the Swiss are "importing" lower German power prices during peak solar production, as Germany has much more solar energy sources than the Swiss. Finally, the authors @dong2019 find that the Swedish have more stable prices due to the relativley high proportion of non variable fossil and hydropower than the Danes, who are more reliant on V-RES in the form of wind and solar.
+
+Other studies are more conflicted, such as @rintamäki2017 who compare Germany and Danish prices and wind that the effect of increasing wind production on day ahead prices is not constant. They caution that interconnectivity with other grids is important in determining the direction of effect. As such, this is further motivation to study each nation's grid independently, as there may be a large number of variables influencing the price. Although the previously mentioned @frauendorfer2018 paper studies the Swiss grid, it does so in the context of transnational energy trade, and not increases in domestic capacities. This is the gap we are evaluating.
+
+## Sources
+
+### Electricity Prices
+
+Swissgrid provides data on 15-minute electricity prices, divided into secondary and tertiary.
+
+Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
+
+### Generation Share Wind and Solar
+
+<https://data.open-power-system-data.org/time_series>
+
+\*more will be added here
+
+# Exploratory Data Analysis (EDA)
+
+## Histograms
+
+## Time Series Plots
+
+# Models
+
+Suggest 2-3 models, done well. This means verifying the assumptions and making neccesary transformation. I suggest doing the results in a seperate section
+
+# Results
+
+## Model 1:
+
+for each model cover the important and interesting statistical models and how they relate the research question. Also, discuss model specific limitations in this context.
+
+## Model 2:
+
+for each model cover the important and interesting statistical models and how they relate the research question. Also, discuss model specific limitations in this context.
+
+## Limitations
+
+-cover general limitations
+
+# Conclusion
+
+What did we learn, what did we not learn, how does this relate to policymakers.
+
+\newpage
+
+# Biblioghraphy
