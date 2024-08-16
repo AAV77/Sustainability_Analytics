@@ -1,18 +1,21 @@
 ---
 title: "Statistical Evaluation of Variable Renewable Energy Source's Contribution to the Variability of Swiss Electricity Prices 2015-2020"
-author: "Del Conte, Küng, Van Lengerich, Vayloyan "
+author: "Del Conte, Küng, van Lengerich, Vayloyan "
 date: "2024-08-03"
 output:
   pdf_document:
     toc: yes
     toc_depth: '3'
 bibliography: references.bib
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = F, warning = F}
 library(readxl) #install packages first if not done so already
 library(dplyr)
 library(lubridate)
+library(ggplot2)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -108,7 +111,7 @@ The lack of control over production with VRES presents a huge challange to the a
 Worst yet for all energy producer, the addition of electricity from VRES has the possibility to:
 
 1.  Drastically lower electricity prices.
-2.  Increase volatility.
+2.  Increase price volatility.
 
 The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price. If they cannot profit - maximize, they will loss - minimize.
 
@@ -151,6 +154,61 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 ## Histograms
 
 ## Time Series Plots
+<<<descriptions and interpretations to be added later>>> 
+
+### Time Series of Electricity Price Ranges
+
+Plot: Time series plot showing the average secondary and tertiary electricity price ranges over time.
+Purpose: To visualize how the price ranges fluctuate over time.
+
+```{r, time series of electricity prices, include = TRUE, warning = F}
+
+# plot time series of electricity prices
+ggplot(d, aes(x = Timestamp)) +
+  geom_line(aes(y = avg_secondary_price_range, color = "Secondary Price Range")) +
+  geom_line(aes(y = avg_tertiary_price_range, color = "Tertiary Price Range")) +
+  labs(title = "Time Series of Average Secondary and Tertiary Price Ranges",
+       x = NULL,
+       y = "Price Range (CHF)") +
+  scale_color_manual(name = "Price Range", 
+                     values = c("Secondary Price Range" = "blue", "Tertiary Price Range" = "red"))
+```
+
+### Time Series of VRES Percent
+
+Plot: Time series plot showing the percentage of Variable Renewable Energy Sources over time.
+Purpose: To analyze the penetration of VRES in the energy grid over time.
+
+```{r, time series of vres percent, include = TRUE, warning = F}
+
+# Plot time series of VRES percent
+ggplot(d, aes(x = Timestamp)) +
+  geom_line(aes(y = VRES_percent, color = "VRES Percent")) +
+  labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
+       x = NULL,
+       y = "VRES") +
+  geom_smooth(aes(y = VRES_percent), method = "lm", se = FALSE, color = "orange") +
+  scale_color_manual(name = "VRES", 
+                     values = c("VRES Percent" = "darkgreen", "Linear Trend" = "orange"))
+```
+
+### Time Series of Actual vs Forecasted Load
+
+Plot: Time series plot comparing the actual and forecasted electricity load in Switzerland.
+Purpose: To evaluate the accuracy of load forecasting and identify discrepancies.
+
+```{r, time series of actual vs. forecast, include = TRUE, warning = F}
+
+# Plot time series of actual vs. forecast
+ggplot(d, aes(x = Timestamp)) +
+  geom_line(aes(y = CH_load_actual_entsoe_transparency, color = "Actual Load")) +
+  geom_line(aes(y = CH_load_forecast_entsoe_transparency, color = "Forecasted Load")) +
+  labs(title = "Time Series of Actual vs Forecasted Electricity Load",
+       x = NULL,
+       y = "Load (MW)") +
+  scale_color_manual(name = "Load Type", 
+                     values = c("Actual Load" = "blue", "Forecasted Load" = "orange"))
+```
 
 # Models
 
