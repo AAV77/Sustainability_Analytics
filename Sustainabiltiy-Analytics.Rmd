@@ -158,20 +158,42 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 ### Time Series of Electricity Price Ranges
 
-Plot: Time series plot showing the average secondary and tertiary electricity price ranges over time.
-Purpose: To visualize how the price ranges fluctuate over time.
+Plot: Time series plot showing the average secondary electricity price ranges over time.
+Purpose: To visualize how the secondary price ranges fluctuate over time.
 
-```{r, time series of electricity prices, include = TRUE, warning = F}
+```{r, ts secondary range, echo = FALSE, warning = F}
 
 # plot time series of electricity prices
 ggplot(d, aes(x = Timestamp)) +
   geom_line(aes(y = avg_secondary_price_range, color = "Secondary Price Range")) +
-  geom_line(aes(y = avg_tertiary_price_range, color = "Tertiary Price Range")) +
-  labs(title = "Time Series of Average Secondary and Tertiary Price Ranges",
+  geom_smooth(aes(y = avg_secondary_price_range, color = "Linear Trend"), 
+              method = "lm", 
+              se = FALSE) +
+  labs(title = "Time Series of Average Secondary Price Ranges",
        x = NULL,
        y = "Price Range (CHF)") +
-  scale_color_manual(name = "Price Range", 
-                     values = c("Secondary Price Range" = "blue", "Tertiary Price Range" = "red"))
+  scale_color_manual(name = "Price Range",
+                     values = c("Secondary Price Range" = "blue", 
+                                "Linear Trend" = "orange"))
+```
+
+Plot: Time series plot showing the average tertiary electricity price ranges over time.
+Purpose: To visualize how the tertiary price ranges fluctuate over time.
+
+```{r, ts tertiary range, echo = FALSE, warning = F}
+
+# plot time series of electricity prices
+ggplot(d, aes(x = Timestamp)) +
+  geom_line(aes(y = avg_tertiary_price_range, color = "Tertiary Price Range")) +
+  geom_smooth(aes(y = avg_tertiary_price_range, color = "Linear Trend"), 
+              method = "lm", 
+              se = TRUE) +
+  labs(title = "Time Series of Average Tertiary Price Ranges",
+       x = NULL,
+       y = "Price Range (CHF)") +
+  scale_color_manual(name = "Price Range",
+                     values = c("Tertiary Price Range" = "darkgreen", 
+                                "Linear Trend" = "orange"))
 ```
 
 ### Time Series of VRES Percent
@@ -179,7 +201,7 @@ ggplot(d, aes(x = Timestamp)) +
 Plot: Time series plot showing the percentage of Variable Renewable Energy Sources over time.
 Purpose: To analyze the penetration of VRES in the energy grid over time.
 
-```{r, time series of vres percent, include = TRUE, warning = F}
+```{r, time series of vres percent, echo = FALSE, warning = F}
 
 # Plot time series of VRES percent
 ggplot(d, aes(x = Timestamp)) +
@@ -187,9 +209,11 @@ ggplot(d, aes(x = Timestamp)) +
   labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
        x = NULL,
        y = "VRES") +
-  geom_smooth(aes(y = VRES_percent), method = "lm", se = FALSE, color = "orange") +
+  geom_smooth(aes(y = VRES_percent, color = "Linear Trend"), 
+              method = "lm", 
+              se = FALSE) +
   scale_color_manual(name = "VRES", 
-                     values = c("VRES Percent" = "darkgreen", "Linear Trend" = "orange"))
+                     values = c("VRES Percent" = "purple", "Linear Trend" = "orange"))
 ```
 
 ### Time Series of Actual vs Forecasted Load
@@ -197,7 +221,7 @@ ggplot(d, aes(x = Timestamp)) +
 Plot: Time series plot comparing the actual and forecasted electricity load in Switzerland.
 Purpose: To evaluate the accuracy of load forecasting and identify discrepancies.
 
-```{r, time series of actual vs. forecast, include = TRUE, warning = F}
+```{r, time series of actual vs. forecast, echo = FALSE, warning = F}
 
 # Plot time series of actual vs. forecast
 ggplot(d, aes(x = Timestamp)) +
