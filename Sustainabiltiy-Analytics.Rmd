@@ -151,7 +151,86 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 # Exploratory Data Analysis (EDA)
 
+```{r, EDA include = true}
+
+head(d)
+
+# Histogram for avg_secondary_price_range
+ggplot(d, aes(x = avg_secondary_price_range)) + 
+  geom_histogram(binwidth = 10, fill = "blue", color = "black") +
+  ggtitle("Histogram of avg_secondary_price_range")
+
+
+min_tpr <- min(d$avg_tertiary_price_range, na.rm = TRUE)
+max_tpr <- max(d$avg_tertiary_price_range, na.rm = TRUE)
+
+min_tpr
+max_tpr
+
+
+
+
+# Histogram for avg_tertiary_price_range with log scale on the x-axis
+ggplot(d, aes(x = avg_tertiary_price_range)) + 
+  geom_histogram(binwidth = 100, fill = "green", color = "black") +
+  scale_y_log10() +  # logarithmic scale for y-axis
+  ggtitle("Histogram of avg_tertiary_price_range (Log Scale)")
+
+
+# VRES_percent Range
+
+min_VRES <- min(d$VRES_percent, na.rm = TRUE)
+max_VRES <- max(d$VRES_percent, na.rm = TRUE)
+
+min_VRES
+max_VRES
+
+
+# Histogram for VRES_percent
+ggplot(d, aes(x = VRES_percent)) + 
+  geom_histogram(binwidth = 0.01, fill = "red", color = "black") +
+  scale_y_log10() + 
+  ggtitle("Histogram of VRES_percent")
+
+
+# Histogram for CH_solar_generation_actual
+ggplot(d, aes(x = CH_solar_generation_actual)) + 
+  geom_histogram(binwidth = 1, fill = "red", color = "black") +
+  ggtitle("Histogram of CH_solar_generation_actual")
+
+
+# Scatter plot between CH_solar_generation_actual and CH_wind_onshore_generation_actual
+ggplot(d, aes(x = CH_solar_generation_actual, y = CH_wind_onshore_generation_actual)) +
+  geom_point(color = "blue", jitter= ) +
+  ggtitle("Scatter plot of Solar vs Wind Generation")
+
+# Scatter plot between CH_solar_generation_actual and CH_wind_onshore_generation_actual with jitter
+ggplot(d, aes(x = CH_solar_generation_actual, y = CH_wind_onshore_generation_actual)) +
+  geom_jitter(color = "blue", width = 0.1, height = 0.1) +
+  ggtitle("Scatter plot of Solar vs Wind Generation with Jitter")
+
+
+# Reshape the data into a long format
+library(tidyr)
+
+data_long <- d %>%
+  pivot_longer(cols = c(CH_solar_generation_actual, CH_wind_onshore_generation_actual), 
+               names_to = "Type", values_to = "Generation") %>%
+  mutate(Type = ifelse(Type == "CH_solar_generation_actual", "Solar", "Wind"))
+
+# Faceted Histogram
+ggplot(data_long, aes(x = Generation, fill = Type)) + 
+  geom_histogram(binwidth = 10, color = "black", alpha = 0.7) +
+  facet_wrap(~ Type, scales = "free_x") + 
+  ggtitle("Comparison of Wind Onshore and Solar Generation") +
+  labs(x = "Generation", y = "Frequency") +
+  theme_minimal()
+
+
+```
 ## Histograms
+
+
 
 ## Time Series Plots
 <<<descriptions and interpretations to be added later>>> 
