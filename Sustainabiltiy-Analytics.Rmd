@@ -161,21 +161,30 @@ ggplot(d, aes(x = avg_secondary_price_range)) +
   ggtitle("Histogram of avg_secondary_price_range")
 
 
+
+
+```
+
+This first Barchart shows the distribution of the average price range of secondary control energy. The energy price is averaged within a 60 minutes time period and in Euro/MWh. 
+
+
+```{r Tertiary Price Range, include = TRUE, echo = FALSE, fig.height = 3, fig.width = 6, fig.align='center'}
+
 min_tpr <- min(d$avg_tertiary_price_range, na.rm = TRUE)
 max_tpr <- max(d$avg_tertiary_price_range, na.rm = TRUE)
 
 min_tpr
 max_tpr
 
-
-
-
-# Histogram for avg_tertiary_price_range with log scale on the x-axis
+# Histogram for avg_tertiary_price_range with log scale on the y-axis
 ggplot(d, aes(x = avg_tertiary_price_range)) + 
   geom_histogram(binwidth = 100, fill = "green", color = "black") +
   scale_y_log10() +  # logarithmic scale for y-axis
   ggtitle("Histogram of avg_tertiary_price_range (Log Scale)")
 
+```
+
+```{r VRES, include = TRUE, echo = FALSE}
 
 # VRES_percent Range
 
@@ -186,12 +195,18 @@ min_VRES
 max_VRES
 
 
+
 # Histogram for VRES_percent
 ggplot(d, aes(x = VRES_percent)) + 
   geom_histogram(binwidth = 0.01, fill = "red", color = "black") +
   scale_y_log10() + 
   ggtitle("Histogram of VRES_percent")
 
+```
+
+
+
+```{r Wind and Solar, include = TRUE, echo = FALSE}
 
 # Histogram for CH_solar_generation_actual
 ggplot(d, aes(x = CH_solar_generation_actual)) + 
@@ -209,6 +224,9 @@ ggplot(d, aes(x = CH_solar_generation_actual, y = CH_wind_onshore_generation_act
   geom_jitter(color = "blue", width = 0.1, height = 0.1) +
   ggtitle("Scatter plot of Solar vs Wind Generation with Jitter")
 
+```
+
+```{r Wind and Solar, include = TRUE, echo = FALSE}
 
 # Reshape the data into a long format
 library(tidyr)
@@ -227,10 +245,10 @@ ggplot(data_long, aes(x = Generation, fill = Type)) +
   theme_minimal()
 
 
+
+
+
 ```
-## Histograms
-
-
 
 ## Time Series Plots
 <<<descriptions and interpretations to be added later>>> 
@@ -239,6 +257,7 @@ ggplot(data_long, aes(x = Generation, fill = Type)) +
 
 Plot: Time series plot showing the average secondary electricity price ranges over time.
 Purpose: To visualize how the secondary price ranges fluctuate over time.
+
 
 ```{r, ts secondary range, echo = FALSE, warning = F}
 
