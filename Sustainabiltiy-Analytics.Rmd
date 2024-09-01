@@ -5,7 +5,6 @@ date: "2024-08-03"
 output:
   pdf_document:
     toc: yes
-    toc_depth: '3'
 bibliography: references.bib
 editor_options: 
   chunk_output_type: console
@@ -20,7 +19,7 @@ library(ggplot2)
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
 
-```{r, importing power prices, warning = F, include= F }
+```{r, importing power prices, warning = F, include= F, cache= T}
 sheets_after_2015 <- c("EnergieUebersichtCH-2015.xls",
                        "EnergieUebersichtCH-2016.xls", 
                        "EnergieUebersichtCH-2017.xls",
@@ -151,7 +150,7 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 # Exploratory Data Analysis (EDA)
 
-```{r, EDA include = true}
+```{r, EDA, include = TRUE}
 
 head(d)
 
@@ -216,7 +215,7 @@ ggplot(d, aes(x = CH_solar_generation_actual)) +
 
 # Scatter plot between CH_solar_generation_actual and CH_wind_onshore_generation_actual
 ggplot(d, aes(x = CH_solar_generation_actual, y = CH_wind_onshore_generation_actual)) +
-  geom_point(color = "blue", jitter= ) +
+  geom_point(color = "blue") +
   ggtitle("Scatter plot of Solar vs Wind Generation")
 
 # Scatter plot between CH_solar_generation_actual and CH_wind_onshore_generation_actual with jitter
