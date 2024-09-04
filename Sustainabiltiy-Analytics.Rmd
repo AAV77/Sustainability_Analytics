@@ -33,15 +33,12 @@ data_list <- list()
 # Loop through the sheets and read each one
 for (s in sheets_after_2015) {
   # Read the Excel file
-  df <- read_xls(s, sheet = "Zeitreihen0h15")
-  df <- df %>% select (1, 22:25) 
+  df <- read_xls(s, sheet = "Zeitreihen0h15",)
+  df <- df %>% select (1, 7,8,9,10, 22:25) 
   
   # Convert the timestamp column
   df[[1]] <- as.numeric(df[[1]])
   df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-30", tz = "Europe/Zurich")
-  
-  # Select and reorder columns
-  df <- df %>% select(Timestamp, 2, 3, 4, 5) %>% slice(-1)
   
   # Store the data frame in the list
   data_list[[s]] <- df
@@ -50,54 +47,106 @@ for (s in sheets_after_2015) {
 # Combine all data frames in the list into one
 combined_data <- bind_rows(data_list)
 
+combined_data <- combined_data %>% 
+  filter(combined_data[[2]] != "kWh") # taking out the duplicated headers which
+                                      # ended up in the dataframe
 ```
 
-```{r, proxy: volatility energy prices 1:00h useable, warning = F, include= F}
 
-#taking max-min prices in absolute for secondary and tertiary
+```{r, manipulations 1, warning = F, include= F, cache= T}
 combined_data <- combined_data %>% 
-   mutate(across(c(2:5), as.numeric))  %>%
-   mutate(secondary_range = abs(.[[2]] - (.[[3]] * -1)    )) %>% 
-   mutate(tertiary_range = abs(.[[4]] - (.[[5]] * -1)    ))
+  rename(
+    pos_sec_amount_kwh = names(combined_data)[2], 
+    neg_sec_amount_kwh = names(combined_data)[3],
+    pos_ter_amount_kwh = names(combined_data)[4],
+    neg_ter_amount_kwh = names(combined_data)[5],
+    price_pos_sec_EUR_MWh = names(combined_data)[6],
+    price_neg_sec_EUR_MWh = names(combined_data)[7],
+    price_pos_ter_EUR_MWh = names(combined_data)[8],
+    price_neg_ter_EUR_MWh = names(combined_data)[9]
+    ) 
 
-#averaging this number for 1h to make it useable later
+combined_data <- combined_data %>% 
+    mutate(across(c(2:9), as.numeric)) # convert to numeric
 
-# Compute hourly averages for the ranges
-hourly_averages <- combined_data %>%
-  mutate(hour = floor_date(Timestamp, "hour")) %>%  # Extract the hour part
-  group_by(hour) %>%                                # Group by hour
-  summarise(
-    avg_secondary_price_range = mean(secondary_range, na.rm = TRUE),  # Compute hourly average for secondary_range
-    avg_tertiary_price_range = mean(tertiary_range, na.rm = TRUE)     # Compute hourly average for tertiary_range
+combined_data <- combined_data %>% 
+  
+  mutate( #calculating costs of energy
+  cost_pos_sec = (combined_data[[2]] / 1000)*combined_data[[6]], 
+  cost_neg_sec = (combined_data[[3]] / 1000)*combined_data[[7]],  
+  cost_pos_ter = (combined_data[[4]] / 1000)*combined_data[[8]],
+  cost_neg_ter = (combined_data[[5]] / 1000)*combined_data[[9]]
   ) %>% 
-  rename(Timestamp = hour)
+  select(10, everything()) %>%  #rearranging
+  select(-...1) #removing unnecesary column
+```
+
+```{r, manipulations 2, warning = F, include= F, cache= T}
+hourly_summary <- combined_data %>%
+  mutate(hour = floor_date(Timestamp, "hour")) %>%  # Create a new column 'hour' 
+                                                    # by rounding down to the 
+                                                    # nearest hour
+  group_by(hour) %>%  # Group by the new 'hour' column
+  summarise(
+    # Sum the energy amount columns
+    pos_sec_amount_kwh = sum(pos_sec_amount_kwh, na.rm = TRUE),
+    neg_sec_amount_kwh = sum(neg_sec_amount_kwh, na.rm = TRUE),
+    pos_ter_amount_kwh = sum(pos_ter_amount_kwh, na.rm = TRUE),
+    neg_ter_amount_kwh = sum(neg_ter_amount_kwh, na.rm = TRUE),
+
+    # Sum the cost columns
+    cost_pos_sec = sum(cost_pos_sec, na.rm = TRUE),
+    cost_neg_sec = sum(cost_neg_sec, na.rm = TRUE),
+    cost_pos_ter = sum(cost_pos_ter, na.rm = TRUE),
+    cost_neg_ter = sum(cost_neg_ter, na.rm = TRUE),
+
+    # Average the price columns
+    avg_price_pos_sec_EUR_MWh = mean(price_pos_sec_EUR_MWh, na.rm = TRUE),
+    avg_price_neg_sec_EUR_MWh = mean(price_neg_sec_EUR_MWh, na.rm = TRUE),
+    avg_price_pos_ter_EUR_MWh = mean(price_pos_ter_EUR_MWh, na.rm = TRUE),
+    avg_price_neg_ter_EUR_MWh = mean(price_neg_ter_EUR_MWh, na.rm = TRUE)
+  ) %>%
+  ungroup() %>%   # Ungroup to complete the operation
+  rename(
+  Timestamp    = hour #renaming for merging
+  )
 ```
 
 ```{r, importing renwable share, include = F , warning = F, include= F}
 ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
 ren_gen <- ren_gen %>% select(-1) %>%   
-  mutate(Timestamp= ymd_hms(cet_cest_timestamp, tz = "Europe/Zurich")) %>%   mutate(VRES_percent = (CH_solar_generation_actual+CH_wind_onshore_generation_actual)/CH_load_actual_entsoe_transparency)
-
-
-
-
-```
-
-```{r, merging, include= FALSE, warning = F}
-d <- full_join(hourly_averages, ren_gen, by = "Timestamp")
-d <- d %>% select (1,2,3,11, everything()) %>% select (-5)   # moving most important col forward
-
-
+  mutate(
+    Timestamp= ymd_hms(cet_cest_timestamp, tz = "Europe/Zurich")) %>%   
+  mutate(
+    VRES_percent = (CH_solar_generation_actual+CH_wind_onshore_generation_actual)/CH_load_actual_entsoe_transparency)
+#importing data and looking at the percentage of VRES generated hourly
 
 ```
 
-```{r, cleaning up workspace, include = FALSE, warning = F}
-# when runnig the script later, please excecute the line below. This removes
-# the clutter from the data cleaning process
+```{r, innerjoining, include= F, warning = F }
+d <- inner_join(hourly_summary, ren_gen, by = "Timestamp") 
+# merging on the hour
+```
 
-remove(combined_data, data_list, df, ren_gen, hourly_averages)
+```{r, adding total cost, include = F, warning = F  }
+d <- d %>% 
+  #calculating total cost by summing all costs
+  mutate(total_cost_EUR = cost_pos_sec+cost_neg_sec+cost_pos_ter+cost_neg_ter) %>% 
+  #removing NA rows for total cost and VRES %, mainly later half 2020
+  filter(!is.na(VRES_percent) & !is.na(total_cost_EUR)) %>% 
+  select(-cet_cest_timestamp) %>%  # removing duplicate row, comment out this command
+                                  # to show that the times are the same
+  select(Timestamp, VRES_percent, total_cost_EUR, everything())
+  
+remove(combined_data, data_list, df, hourly_summary, ren_gen)
+# removing clutter
+```
+
+
+```{r}
 
 ```
+
 
 \newpage
 
@@ -164,8 +213,7 @@ ggplot(d, aes(x = avg_secondary_price_range)) +
 
 ```
 
-This first Barchart shows the distribution of the average price range of secondary control energy. The energy price is averaged within a 60 minutes time period and in Euro/MWh. 
-
+This first Barchart shows the distribution of the average price range of secondary control energy. The energy price is averaged within a 60 minutes time period and in Euro/MWh.
 
 ```{r Tertiary Price Range, include = TRUE, echo = FALSE, fig.height = 3, fig.width = 6, fig.align='center'}
 
@@ -202,8 +250,6 @@ ggplot(d, aes(x = VRES_percent)) +
   ggtitle("Histogram of VRES_percent")
 
 ```
-
-
 
 ```{r Wind and Solar, include = TRUE, echo = FALSE}
 
@@ -250,13 +296,12 @@ ggplot(data_long, aes(x = Generation, fill = Type)) +
 ```
 
 ## Time Series Plots
-<<<descriptions and interpretations to be added later>>> 
+
+\<\<<descriptions and interpretations to be added later>\>\>
 
 ### Time Series of Electricity Price Ranges
 
-Plot: Time series plot showing the average secondary electricity price ranges over time.
-Purpose: To visualize how the secondary price ranges fluctuate over time.
-
+Plot: Time series plot showing the average secondary electricity price ranges over time. Purpose: To visualize how the secondary price ranges fluctuate over time.
 
 ```{r, ts secondary range, echo = FALSE, warning = F}
 
@@ -274,8 +319,7 @@ ggplot(d, aes(x = Timestamp)) +
                                 "Linear Trend" = "orange"))
 ```
 
-Plot: Time series plot showing the average tertiary electricity price ranges over time.
-Purpose: To visualize how the tertiary price ranges fluctuate over time.
+Plot: Time series plot showing the average tertiary electricity price ranges over time. Purpose: To visualize how the tertiary price ranges fluctuate over time.
 
 ```{r, ts tertiary range, echo = FALSE, warning = F}
 
@@ -295,8 +339,7 @@ ggplot(d, aes(x = Timestamp)) +
 
 ### Time Series of VRES Percent
 
-Plot: Time series plot showing the percentage of Variable Renewable Energy Sources over time.
-Purpose: To analyze the penetration of VRES in the energy grid over time.
+Plot: Time series plot showing the percentage of Variable Renewable Energy Sources over time. Purpose: To analyze the penetration of VRES in the energy grid over time.
 
 ```{r, time series of vres percent, echo = FALSE, warning = F}
 
@@ -315,8 +358,7 @@ ggplot(d, aes(x = Timestamp)) +
 
 ### Time Series of Actual vs Forecasted Load
 
-Plot: Time series plot comparing the actual and forecasted electricity load in Switzerland.
-Purpose: To evaluate the accuracy of load forecasting and identify discrepancies.
+Plot: Time series plot comparing the actual and forecasted electricity load in Switzerland. Purpose: To evaluate the accuracy of load forecasting and identify discrepancies.
 
 ```{r, time series of actual vs. forecast, echo = FALSE, warning = F}
 
