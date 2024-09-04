@@ -1,5 +1,5 @@
 ---
-title: "Statistical Evaluation of Variable Renewable Energy Source's Contribution to the Variability of Swiss Electricity Prices 2015-2020"
+title: "Evaluation of Variable Renewable Energy Source's contribution to cost of control energy"
 author: "Del Conte, Küng, van Lengerich, Vayloyan "
 date: "2024-08-03"
 output:
@@ -8,6 +8,7 @@ output:
 bibliography: references.bib
 editor_options: 
   chunk_output_type: console
+notes: footnotes
 ---
 
 ```{r, include = F, warning = F}
@@ -103,9 +104,10 @@ remove(combined_data, data_list, df, ren_gen, hourly_averages)
 
 # Introduction
 
-Governments and scientists around the world largely agree on the need for a low-carbon electricity grid. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels. A substrate of RES are so called Variable-RES (VRES), which are electricity sources who's production cannot be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources who's production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can present a challange, it is far more manageable than VRES.
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce none to little direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge.
+[^sdg]: <https://sdgs.un.org/goals> 
 
-The lack of control over production with VRES presents a huge challange to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
+The lack of direct control over production with VRES presents a huge challenge to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
 
 Worst yet for all energy producer, the addition of electricity from VRES has the possibility to:
 
