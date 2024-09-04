@@ -407,6 +407,8 @@ plot(VRES_log_decomposed)
 adf.test(VRES_log)
 ```
 
+### SARIMA and Forecast
+
 ## Limitations
 
 -cover general limitations
