@@ -16,6 +16,7 @@ library(readxl) #install packages first if not done so already
 library(readr)
 library(tidyr)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(forecast)
@@ -31,12 +32,19 @@ sheets_after_2015 <- c("EnergieUebersichtCH-2015.xls",
                        "EnergieUebersichtCH-2017.xls",
                        "EnergieUebersichtCH-2018.xls", 
                        "EnergieUebersichtCH-2019.xls",
-                       "EnergieUebersichtCH-2020.xls")
+                       "EnergieUebersichtCH-2020.xls"
+                       )
+
+sheets_after_2021 <- c("EnergieUebersichtCH-2021.xlsx",
+                       "EnergieUebersichtCH-2022.xlsx",
+                       "EnergieUebersichtCH-2023.xlsx",
+                       "EnergieUebersichtCH-2024.xlsx"
+                       )
 
 # Empty list to store data frames
 data_list <- list()
 
-# Loop through the sheets and read each one
+# Loop through the sheets and read each one for xls
 for (s in sheets_after_2015) {
   # Read the Excel file
   df <- read_xls(s, sheet = "Zeitreihen0h15",)
@@ -44,7 +52,28 @@ for (s in sheets_after_2015) {
   
   # Convert the timestamp column
   df[[1]] <- as.numeric(df[[1]])
-  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-30", tz = "Europe/Zurich")
+  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-29 23:00:00", tz = "Europe/Zurich")
+  
+  # Store the data frame in the list
+  data_list[[s]] <- df %>% select(-1)
+}
+
+# Loop through the sheets and read each one for xlsx
+for (s in sheets_after_2021) {
+  # Read the Excel file
+  df <- read_xlsx(s, sheet = "Zeitreihen0h15",)
+  df <- df %>% select (1, 7,8,9,10, 22:25) 
+  
+  # Convert the timestamp column
+  df$Timestamp <- as.POSIXct(df[[1]], format = "%d.%m.%Y %H:%M", tz = "Europe/Zurich")
+  
+  #remove first column
+  df <- df %>% select(-1)
+  
+  # Set the column-names to match the xls data
+  # Adjusting the slightly different spelling
+  colnames(df) <- 
+    colnames(data_list[["EnergieUebersichtCH-2015.xls"]])
   
   # Store the data frame in the list
   data_list[[s]] <- df
@@ -62,30 +91,35 @@ combined_data <- combined_data %>%
 ```{r, manipulations 1, warning = F, include= F, cache= T}
 combined_data <- combined_data %>% 
   rename(
-    pos_sec_amount_kwh = names(combined_data)[2], 
-    neg_sec_amount_kwh = names(combined_data)[3],
-    pos_ter_amount_kwh = names(combined_data)[4],
-    neg_ter_amount_kwh = names(combined_data)[5],
-    price_pos_sec_EUR_MWh = names(combined_data)[6],
-    price_neg_sec_EUR_MWh = names(combined_data)[7],
-    price_pos_ter_EUR_MWh = names(combined_data)[8],
-    price_neg_ter_EUR_MWh = names(combined_data)[9]
+    pos_sec_amount_kwh = names(combined_data)[1], 
+    neg_sec_amount_kwh = names(combined_data)[2],
+    pos_ter_amount_kwh = names(combined_data)[3],
+    neg_ter_amount_kwh = names(combined_data)[4],
+    price_pos_sec_EUR_MWh = names(combined_data)[5],
+    price_neg_sec_EUR_MWh = names(combined_data)[6],
+    price_pos_ter_EUR_MWh = names(combined_data)[7],
+    price_neg_ter_EUR_MWh = names(combined_data)[8]
     ) 
 
 combined_data <- combined_data %>% 
-    mutate(across(c(2:9), as.numeric)) # convert to numeric
+    mutate(across(c(1:8), as.numeric)) # convert to numeric
 
 combined_data <- combined_data %>% 
-  
   mutate( #calculating costs of energy
-  cost_pos_sec = (combined_data[[2]] / 1000)*combined_data[[6]], 
-  cost_neg_sec = (combined_data[[3]] / 1000)*combined_data[[7]],  
-  cost_pos_ter = (combined_data[[4]] / 1000)*combined_data[[8]],
-  cost_neg_ter = (combined_data[[5]] / 1000)*combined_data[[9]]
+  cost_pos_sec = (combined_data[[1]] / 1000)*combined_data[[5]], 
+  cost_neg_sec = (combined_data[[2]] / 1000)*combined_data[[6]],  
+  cost_pos_ter = (combined_data[[3]] / 1000)*combined_data[[7]],
+  cost_neg_ter = (combined_data[[4]] / 1000)*combined_data[[8]]
   ) %>% 
-  select(10, everything()) %>%  #rearranging
-  select(-...1) #removing unnecesary column
+  select(9, everything())  #rearranging
 ```
+
+```{r, Test combined data 2021 with report, warning = F, include= F}
+sums_2021 <- combined_data %>%
+    filter(year(Timestamp) == 2021) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
+
 
 ```{r, manipulations 2, warning = F, include= F, cache= T}
 hourly_summary <- combined_data %>%
@@ -118,6 +152,13 @@ hourly_summary <- combined_data %>%
   )
 ```
 
+```{r, Test hourly summary, warning = F, include= F}
+sums_2020 <- hourly_summary %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
+
+
 ```{r, importing renwable share, include = F , warning = F, include= F}
 ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
 ren_gen <- ren_gen %>% select(-1) %>%   
@@ -129,25 +170,40 @@ ren_gen <- ren_gen %>% select(-1) %>%
 
 ```
 
-```{r, innerjoining, include= F, warning = F }
-d <- inner_join(hourly_summary, ren_gen, by = "Timestamp") 
+
+```{r, join, include= F, warning = F }
+d <- left_join(hourly_summary, ren_gen, by = "Timestamp") 
 # merging on the hour
+
 ```
+
+
+```{r, Test d, warning = F, include= F}
+sums_2020 <- d %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE)))
+```
+
 
 ```{r, adding total cost, include = F, warning = F  }
 d <- d %>% 
   #calculating total cost by summing all costs
   mutate(total_cost_EUR = cost_pos_sec+cost_neg_sec+cost_pos_ter+cost_neg_ter) %>% 
   #removing NA rows for total cost and VRES %, mainly later half 2020
-  filter(!is.na(VRES_percent) & !is.na(total_cost_EUR)) %>% 
+  filter(!is.na(VRES_percent) | !is.na(total_cost_EUR)) %>% 
   select(-cet_cest_timestamp) %>%  # removing duplicate row, comment out this command
                                   # to show that the times are the same
   select(Timestamp, VRES_percent, total_cost_EUR, everything())
   
-remove(combined_data, data_list, df, hourly_summary, ren_gen)
+# remove(combined_data, data_list, df, hourly_summary, ren_gen)
 # removing clutter
 ```
 
+```{r, Test d, warning = F, include= F}
+sums_2020 <- d %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
 
 ```{r, adding units where missing, include = F, warning = F}
 d.h <- d %>%
@@ -215,6 +271,20 @@ head(d.d)
 remove(energy_production, energy_prices)
 ```
 
+
+```{r, Test d.h, warning = F, include= F}
+sums_2019 <- d.h %>%
+    filter(year(Timestamp) == 2019) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+
+sums_2020 <- d.h %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+
+sums_2021 <- d.h %>%
+    filter(year(Timestamp) == 2021) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
 
 \newpage
 
