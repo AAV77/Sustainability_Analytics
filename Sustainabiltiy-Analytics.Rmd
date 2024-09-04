@@ -14,6 +14,7 @@ notes: footnotes
 ```{r, include = F, warning = F}
 library(readxl) #install packages first if not done so already
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(forecast)
@@ -41,7 +42,7 @@ for (s in sheets_after_2015) {
   
   # Convert the timestamp column
   df[[1]] <- as.numeric(df[[1]])
-  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-30", tz = "Europe/Zurich")
+  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-29 23:00:00", tz = "Europe/Zurich")
   
   # Store the data frame in the list
   data_list[[s]] <- df
@@ -84,6 +85,13 @@ combined_data <- combined_data %>%
   select(-...1) #removing unnecesary column
 ```
 
+```{r, Test combined data 2020 with report, warning = F, include= F}
+sums_2020 <- combined_data %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
+
+
 ```{r, manipulations 2, warning = F, include= F, cache= T}
 hourly_summary <- combined_data %>%
   mutate(hour = floor_date(Timestamp, "hour")) %>%  # Create a new column 'hour' 
@@ -115,6 +123,13 @@ hourly_summary <- combined_data %>%
   )
 ```
 
+```{r, Test hourly summary, warning = F, include= F}
+sums_2020 <- hourly_summary %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
+
+
 ```{r, importing renwable share, include = F , warning = F, include= F}
 ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
 ren_gen <- ren_gen %>% select(-1) %>%   
@@ -126,10 +141,20 @@ ren_gen <- ren_gen %>% select(-1) %>%
 
 ```
 
-```{r, innerjoining, include= F, warning = F }
-d <- inner_join(hourly_summary, ren_gen, by = "Timestamp") 
+
+```{r, join, include= F, warning = F }
+d <- left_join(hourly_summary, ren_gen, by = "Timestamp") 
 # merging on the hour
+
 ```
+
+
+```{r, Test d, warning = F, include= F}
+sums_2020 <- d %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE)))
+```
+
 
 ```{r, adding total cost, include = F, warning = F  }
 d <- d %>% 
@@ -145,6 +170,11 @@ remove(combined_data, data_list, df, hourly_summary, ren_gen)
 # removing clutter
 ```
 
+```{r, Test d, warning = F, include= F}
+sums_2020 <- d %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
 
 ```{r, adding units where missing, include = F, warning = F}
 d.h <- d %>%
