@@ -146,8 +146,21 @@ remove(combined_data, data_list, df, hourly_summary, ren_gen)
 ```
 
 
-```{r}
-#test
+```{r, adding units where missing, include = F, warning = F}
+d.h <- d %>%
+  rename(
+    cost_pos_sec_EUR = cost_pos_sec, 
+    cost_neg_sec_EUR = cost_neg_sec,
+    cost_pos_ter_EUR = cost_pos_ter,
+    cost_neg_ter_EUR = cost_neg_ter,
+    CH_load_actual_entsoe_transparency_MW = CH_load_actual_entsoe_transparency,
+    CH_load_forecast_entsoe_transparency_MW = CH_load_forecast_entsoe_transparency,
+    CH_solar_capacity_MW = CH_solar_capacity,
+    CH_solar_generation_actual_MW = CH_solar_generation_actual,
+    CH_wind_onshore_capacity_MW = CH_wind_onshore_capacity,
+    CH_wind_onshore_generation_actual_MW = CH_wind_onshore_generation_actual,
+    ) 
+  
 ```
 
 
