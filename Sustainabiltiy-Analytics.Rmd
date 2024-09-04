@@ -1,5 +1,5 @@
 ---
-title: "Statistical Evaluation of Variable Renewable Energy Source's Contribution to the Variability of Swiss Electricity Prices 2015-2020"
+title: "Evaluation of Variable Renewable Energy Source's contribution to cost of control energy"
 author: "Del Conte, Küng, van Lengerich, Vayloyan "
 date: "2024-08-03"
 output:
@@ -8,6 +8,7 @@ output:
 bibliography: references.bib
 editor_options: 
   chunk_output_type: console
+notes: footnotes
 ---
 
 ```{r, include = F, warning = F}
@@ -15,6 +16,8 @@ library(readxl) #install packages first if not done so already
 library(dplyr)
 library(lubridate)
 library(ggplot2)
+library(forecast)
+library(tseries)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -152,9 +155,10 @@ remove(combined_data, data_list, df, hourly_summary, ren_gen)
 
 # Introduction
 
-Governments and scientists around the world largely agree on the need for a low-carbon electricity grid. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels. A substrate of RES are so called Variable-RES (VRES), which are electricity sources who's production cannot be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources who's production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can present a challange, it is far more manageable than VRES.
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce none to little direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge.
+[^sdg]: <https://sdgs.un.org/goals> 
 
-The lack of control over production with VRES presents a huge challange to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
+The lack of direct control over production with VRES presents a huge challenge to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
 
 Worst yet for all energy producer, the addition of electricity from VRES has the possibility to:
 
@@ -383,9 +387,71 @@ Suggest 2-3 models, done well. This means verifying the assumptions and making n
 
 for each model cover the important and interesting statistical models and how they relate the research question. Also, discuss model specific limitations in this context.
 
-## Model 2:
+## Model 2: VRES
 
-for each model cover the important and interesting statistical models and how they relate the research question. Also, discuss model specific limitations in this context.
+### Visualization
+```{r, vres ts prep, include = FALSE, warning = F}
+# Convert the Timestamp column to a Date-Time object
+d$Timestamp <- as.POSIXct(d$Timestamp, format="%Y-%m-%d %H:%M:%S")
+
+# Replace NAs in 'VRES_percent' with zero
+d$VRES_percent[is.na(d$VRES_percent)] <- 0
+
+# Convert VRES_percent into a time series object
+VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
+```
+
+```{r, plot ts of vres percent, echo = FALSE, warning = F}
+
+# Plot time series of VRES percent
+ggplot(d, aes(x = Timestamp)) +
+  geom_line(aes(y = VRES_ts, color = "VRES Percent")) +
+  labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
+       x = NULL,
+       y = "VRES") +
+  geom_smooth(aes(y = VRES_ts, color = "Linear Trend"), 
+              method = "lm", 
+              se = FALSE) +
+  scale_color_manual(name = "VRES", 
+                     values = c("VRES Percent" = "purple", "Linear Trend" = "orange"))
+```
+
+### Decomposition and Stationarity
+
+```{r, vres additive decomposition, echo = FALSE, warning = F}
+
+# Decompose the time series
+VRES_decomposed <- decompose(VRES_ts)
+plot(VRES_decomposed)
+```
+
+```{r, vres adf1, echo = FALSE, warning = F}
+
+# Perform Augmented Dickey-Fuller test
+adf.test(VRES_ts)
+```
+
+The Augmented Dickey-Fuller test has a p-value of 0.01 although the decomposition clearly shows a trend, seasonality and also a change in randomness. We suspect a decomposition of a multiplicative time series might help. A multiplicative decomposition assumes that the components (trend, seasonality, and noise) interact in a multiplicative manner. This is often suitable when the variability of the series increases as the level of the series increases, which might be indicated by the trend and seasonal patterns scaling with the overall level.
+
+Applying a log transformation to the data can stabilize the variance, which often makes the series more amenable to decomposition or modeling. The log transformation essentially converts a multiplicative relationship into an additive one.
+
+```{r, vres multiplicative decomposition, echo = FALSE, warning = F}
+
+# Apply log transformation (add a small constant to avoid log(0) issues)
+VRES_log <- log(VRES_ts + 1e-6)
+
+# Decompose the log-transformed time series
+VRES_log_decomposed <- decompose(VRES_log)
+plot(VRES_log_decomposed)
+```
+
+```{r, vres adf2, echo = FALSE, warning = F}
+
+# Perform Augmented Dickey-Fuller test
+adf.test(VRES_log)
+```
+
+### SARIMA and Forecast
 
 ## Limitations
 
