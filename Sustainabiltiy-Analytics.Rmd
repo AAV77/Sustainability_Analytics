@@ -13,11 +13,15 @@ notes: footnotes
 
 ```{r, include = F, warning = F}
 library(readxl) #install packages first if not done so already
+library(readr)
+library(tidyr)
 library(dplyr)
+library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(forecast)
 library(tseries)
+library(rugarch)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -28,12 +32,19 @@ sheets_after_2015 <- c("EnergieUebersichtCH-2015.xls",
                        "EnergieUebersichtCH-2017.xls",
                        "EnergieUebersichtCH-2018.xls", 
                        "EnergieUebersichtCH-2019.xls",
-                       "EnergieUebersichtCH-2020.xls")
+                       "EnergieUebersichtCH-2020.xls"
+                       )
+
+sheets_after_2021 <- c("EnergieUebersichtCH-2021.xlsx",
+                       "EnergieUebersichtCH-2022.xlsx",
+                       "EnergieUebersichtCH-2023.xlsx",
+                       "EnergieUebersichtCH-2024.xlsx"
+                       )
 
 # Empty list to store data frames
 data_list <- list()
 
-# Loop through the sheets and read each one
+# Loop through the sheets and read each one for xls
 for (s in sheets_after_2015) {
   # Read the Excel file
   df <- read_xls(s, sheet = "Zeitreihen0h15",)
@@ -41,7 +52,28 @@ for (s in sheets_after_2015) {
   
   # Convert the timestamp column
   df[[1]] <- as.numeric(df[[1]])
-  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-30", tz = "Europe/Zurich")
+  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-29 23:00:00", tz = "Europe/Zurich")
+  
+  # Store the data frame in the list
+  data_list[[s]] <- df %>% select(-1)
+}
+
+# Loop through the sheets and read each one for xlsx
+for (s in sheets_after_2021) {
+  # Read the Excel file
+  df <- read_xlsx(s, sheet = "Zeitreihen0h15",)
+  df <- df %>% select (1, 7,8,9,10, 22:25) 
+  
+  # Convert the timestamp column
+  df$Timestamp <- as.POSIXct(df[[1]], format = "%d.%m.%Y %H:%M", tz = "Europe/Zurich")
+  
+  #remove first column
+  df <- df %>% select(-1)
+  
+  # Set the column-names to match the xls data
+  # Adjusting the slightly different spelling
+  colnames(df) <- 
+    colnames(data_list[["EnergieUebersichtCH-2015.xls"]])
   
   # Store the data frame in the list
   data_list[[s]] <- df
@@ -59,30 +91,35 @@ combined_data <- combined_data %>%
 ```{r, manipulations 1, warning = F, include= F, cache= T}
 combined_data <- combined_data %>% 
   rename(
-    pos_sec_amount_kwh = names(combined_data)[2], 
-    neg_sec_amount_kwh = names(combined_data)[3],
-    pos_ter_amount_kwh = names(combined_data)[4],
-    neg_ter_amount_kwh = names(combined_data)[5],
-    price_pos_sec_EUR_MWh = names(combined_data)[6],
-    price_neg_sec_EUR_MWh = names(combined_data)[7],
-    price_pos_ter_EUR_MWh = names(combined_data)[8],
-    price_neg_ter_EUR_MWh = names(combined_data)[9]
+    pos_sec_amount_kwh = names(combined_data)[1], 
+    neg_sec_amount_kwh = names(combined_data)[2],
+    pos_ter_amount_kwh = names(combined_data)[3],
+    neg_ter_amount_kwh = names(combined_data)[4],
+    price_pos_sec_EUR_MWh = names(combined_data)[5],
+    price_neg_sec_EUR_MWh = names(combined_data)[6],
+    price_pos_ter_EUR_MWh = names(combined_data)[7],
+    price_neg_ter_EUR_MWh = names(combined_data)[8]
     ) 
 
 combined_data <- combined_data %>% 
-    mutate(across(c(2:9), as.numeric)) # convert to numeric
+    mutate(across(c(1:8), as.numeric)) # convert to numeric
 
 combined_data <- combined_data %>% 
-  
   mutate( #calculating costs of energy
-  cost_pos_sec = (combined_data[[2]] / 1000)*combined_data[[6]], 
-  cost_neg_sec = (combined_data[[3]] / 1000)*combined_data[[7]],  
-  cost_pos_ter = (combined_data[[4]] / 1000)*combined_data[[8]],
-  cost_neg_ter = (combined_data[[5]] / 1000)*combined_data[[9]]
+  cost_pos_sec = (combined_data[[1]] / 1000)*combined_data[[5]], 
+  cost_neg_sec = (combined_data[[2]] / 1000)*combined_data[[6]],  
+  cost_pos_ter = (combined_data[[3]] / 1000)*combined_data[[7]],
+  cost_neg_ter = (combined_data[[4]] / 1000)*combined_data[[8]]
   ) %>% 
-  select(10, everything()) %>%  #rearranging
-  select(-...1) #removing unnecesary column
+  select(9, everything())  #rearranging
 ```
+
+```{r, Test combined data 2021 with report, warning = F, include= F}
+sums_2021 <- combined_data %>%
+    filter(year(Timestamp) == 2021) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
+
 
 ```{r, manipulations 2, warning = F, include= F, cache= T}
 hourly_summary <- combined_data %>%
@@ -115,6 +152,13 @@ hourly_summary <- combined_data %>%
   )
 ```
 
+```{r, Test hourly summary, warning = F, include= F}
+sums_2020 <- hourly_summary %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
+
+
 ```{r, importing renwable share, include = F , warning = F, include= F}
 ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
 ren_gen <- ren_gen %>% select(-1) %>%   
@@ -126,25 +170,40 @@ ren_gen <- ren_gen %>% select(-1) %>%
 
 ```
 
-```{r, innerjoining, include= F, warning = F }
-d <- inner_join(hourly_summary, ren_gen, by = "Timestamp") 
+
+```{r, join, include= F, warning = F }
+d <- left_join(hourly_summary, ren_gen, by = "Timestamp") 
 # merging on the hour
+
 ```
+
+
+```{r, Test d, warning = F, include= F}
+sums_2020 <- d %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE)))
+```
+
 
 ```{r, adding total cost, include = F, warning = F  }
 d <- d %>% 
   #calculating total cost by summing all costs
   mutate(total_cost_EUR = cost_pos_sec+cost_neg_sec+cost_pos_ter+cost_neg_ter) %>% 
   #removing NA rows for total cost and VRES %, mainly later half 2020
-  filter(!is.na(VRES_percent) & !is.na(total_cost_EUR)) %>% 
+  filter(!is.na(VRES_percent) | !is.na(total_cost_EUR)) %>% 
   select(-cet_cest_timestamp) %>%  # removing duplicate row, comment out this command
                                   # to show that the times are the same
   select(Timestamp, VRES_percent, total_cost_EUR, everything())
   
-remove(combined_data, data_list, df, hourly_summary, ren_gen)
+# remove(combined_data, data_list, df, hourly_summary, ren_gen)
 # removing clutter
 ```
 
+```{r, Test d, warning = F, include= F}
+sums_2020 <- d %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
 
 ```{r, adding units where missing, include = F, warning = F}
 d.h <- d %>%
@@ -163,6 +222,69 @@ d.h <- d %>%
   
 ```
 
+```{r, add benchmark data, include = F, warning = F}
+# Load the datasets
+energy_production <- read_csv("ogd104_stromproduktion_swissgrid.csv")
+energy_prices <- read_csv("ogd106_preise_strom_boerse.csv")
+
+# Reshape the energy production data to have one column per energy source
+energy_production <- energy_production %>%
+  pivot_wider(names_from = Energietraeger, values_from = Produktion_GWh, values_fill = 0)
+
+# Merge the reshaped energy production data with the energy prices data
+d.d <- merge(energy_prices, energy_production, by="Datum", all.x=TRUE)
+
+# Fill any remaining NAs with 0 (in case there were dates in energy_prices not in energy_production)
+d.d[is.na(d.d)] <- 0
+```
+
+```{r, rename variables, include = F, warning = F}
+
+# Rename columns in dataset
+d.d <- d.d %>%
+  rename(
+    Date = Datum,
+    Hydro_GWh = Flusskraft,
+    Nuclear_GWh = Kernkraft,
+    Storage_GWh = Speicherkraft,
+    Thermal_GWh = Thermische,
+    Photovoltaic_GWh = Photovoltaik,
+    Wind_GWh = Wind
+  )
+```
+
+```{r, add vres and non-vres, include = F, warning = F}
+
+# Add new columns 'VRES_GWh' and 'Non_VRES_GWh' to d.d
+d.d <- d.d %>%
+  mutate(
+    VRES_GWh = Photovoltaic_GWh + Wind_GWh,
+    Non_VRES_GWh = Hydro_GWh + Nuclear_GWh + Storage_GWh + Thermal_GWh
+  )
+
+# View the first few rows to confirm the new columns
+head(d.d)
+```
+
+```{r, rename variables, include = F, warning = F}
+# Remove clutter
+remove(energy_production, energy_prices)
+```
+
+
+```{r, Test d.h, warning = F, include= F}
+sums_2019 <- d.h %>%
+    filter(year(Timestamp) == 2019) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+
+sums_2020 <- d.h %>%
+    filter(year(Timestamp) == 2020) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+
+sums_2021 <- d.h %>%
+    filter(year(Timestamp) == 2021) %>%
+    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+```
 
 \newpage
 
@@ -376,11 +498,314 @@ ggplot(data_long, aes(x = Generation, fill = Type)) +
 
 ```
 
-## Time Series Plots
+## Time Series of Hourly Data TO BE ADJUSTED)
 
 \<\<<descriptions and interpretations to be added later>\>\>
 
-### Time Series of Electricity Price Ranges
+
+
+### VRES
+
+### Visualization
+```{r, vres ts prep, include = FALSE, warning = F}
+# Convert the Timestamp column to a Date-Time object
+d$Timestamp <- as.POSIXct(d$Timestamp, format="%Y-%m-%d %H:%M:%S")
+
+# Replace NAs in 'VRES_percent' with zero
+d$VRES_percent[is.na(d$VRES_percent)] <- 0
+
+# Convert VRES_percent into a time series object
+VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
+```
+
+```{r, plot ts of vres percent, echo = FALSE, warning = F}
+
+# Plot time series of VRES percent
+ggplot(d, aes(x = Timestamp)) +
+  geom_line(aes(y = VRES_ts, color = "VRES Percent", size = 0.5)) +
+  labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
+       x = NULL,
+       y = "VRES") +
+  geom_smooth(aes(y = VRES_ts, color = "Linear Trend"), 
+              method = "lm", 
+              se = FALSE) +
+  scale_color_manual(name = "VRES", 
+                     values = c("VRES Percent" = "purple", "Linear Trend" = "orange"))
+```
+
+### Decomposition and Stationarity
+
+```{r, vres additive decomposition, echo = FALSE, warning = F}
+
+# Decompose the time series
+VRES_decomposed <- decompose(VRES_ts)
+plot(VRES_decomposed)
+```
+
+```{r, vres adf1, echo = FALSE, warning = F}
+
+# Perform Augmented Dickey-Fuller test
+adf.test(VRES_ts)
+```
+
+The Augmented Dickey-Fuller test has a p-value of 0.01 although the decomposition clearly shows a trend, seasonality and also a change in randomness. We suspect a decomposition of a multiplicative time series might help. A multiplicative decomposition assumes that the components (trend, seasonality, and noise) interact in a multiplicative manner. This is often suitable when the variability of the series increases as the level of the series increases, which might be indicated by the trend and seasonal patterns scaling with the overall level.
+
+Applying a log transformation to the data can stabilize the variance, which often makes the series more amenable to decomposition or modeling. The log transformation essentially converts a multiplicative relationship into an additive one.
+
+```{r, vres multiplicative decomposition, echo = FALSE, warning = F}
+
+# Apply log transformation (add a small constant to avoid log(0) issues)
+VRES_log <- log(VRES_ts + 1e-6)
+
+# Decompose the log-transformed time series
+VRES_log_decomposed <- decompose(VRES_log)
+plot(VRES_log_decomposed)
+```
+
+```{r, vres adf2, echo = FALSE, warning = F}
+
+# Perform Augmented Dickey-Fuller test
+adf.test(VRES_log)
+```
+
+## Time Series of Daily Benchmark Data
+
+### Daily VRES and non-VRES Production
+
+#### 1. Visualization
+
+```{r, sun and wind visualization, echo = FALSE, warning = F}
+
+ggplot(d.d %>%
+         select(Date, Photovoltaic_GWh, Wind_GWh) %>%
+         pivot_longer(cols = c(Photovoltaic_GWh, Wind_GWh), 
+                      names_to = "Source", 
+                      values_to = "GWh"), 
+       aes(x = as.Date(Date), y = GWh, color = Source)) +
+  geom_line(size = 1) +
+  labs(title = "Time Series of Photovoltaic and Wind Energy Production",
+       x = NULL, y = "Energy Production (GWh)") +
+  scale_color_manual(values = c("Photovoltaic_GWh" = "orange", "Wind_GWh" = "darkgrey")) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+```
+
+The first graph illustrates the evolution of photovoltaic and wind energy production over time. Photovoltaic production (in orange) exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, Wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
+
+```{r, vres visualization, echo = FALSE, warning = F}
+
+ggplot(d.d %>%
+         select(Date, VRES_GWh, Non_VRES_GWh) %>%
+         pivot_longer(cols = c(VRES_GWh, Non_VRES_GWh), 
+                      names_to = "Source", 
+                      values_to = "GWh"), 
+       aes(x = as.Date(Date), y = GWh, color = Source)) +
+  geom_line(size = 1) +
+  labs(title = "Time Series of VRES and Non-VRES Production",
+       x = NULL, y = "Energy Production (GWh)") +
+  scale_color_manual(values = c("VRES_GWh" = "darkgreen", "Non_VRES_GWh" = "black")) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+```
+
+The second graph compares VRES (Variable Renewable Energy Sources, including Photovoltaic and Wind) with Non-VRES (comprising Hydro, Nuclear, Storage, and Thermal energy). The Non-VRES sources (in black) dominate total energy production and display significant variability over time, driven by factors such as fluctuating demand and adjustments in non-renewable energy generation. VRES production (in green), while much lower in magnitude, shows a clear seasonal trend, largely driven by photovoltaic energy, with peaks in the summer months.
+
+#### 2. Decomposition of Daily VRES Production
+
+```{r, decomposition, echo = FALSE, warning = F}
+# Create a time series object for VRES production (Photovoltaic + Wind)
+vres_ts_d <- ts(d.d$VRES_GWh, start = c(2017, 1), frequency = 365)
+
+# Decompose the VRES time series
+vres_decomp_d <- decompose(vres_ts_d)
+plot(vres_decomp_d, xlab = NULL)
+
+# Check the first few values of each component
+head(vres_decomp_d$trend)
+head(vres_decomp_d$seasonal)
+head(vres_decomp_d$random)
+```
+
+The decomposition reveals a clear linear trend and strong seasonal patterns, with some variability in both the seasonal component and residuals. While the seasonal noise is expected due to the nature of renewable energy sources like photovoltaic and wind, it does not obscure the overall pattern. The fluctuations in the residuals suggest potential volatility of variance, but this can be addressed by examining the residuals further after modeling.
+
+#### 3. Stationarity and Differencing Daily VRES Production
+
+First, we apply regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
+
+```{r, differencing, echo = FALSE, warning = F}
+# Apply first-order differencing to make the series stationary
+diff_vres_ts_d <- diff(vres_ts_d)
+
+# Apply seasonal differencing (assume seasonal frequency = 365 for daily data with yearly seasonality)
+seasonal_diff_vres_ts_d <- diff(diff_vres_ts_d, lag = 365)
+```
+
+```{r, plot differencing, echo = FALSE, warning = F}
+# Set up the plot window to display two plots side by side
+par(mfrow = c(2, 1))
+
+# Plot the differenced series
+plot(diff_vres_ts_d, main="Differenced VRES Time Series", 
+     ylab = "Differenced GWh", 
+     xlab = NULL)
+
+# Plot the seasonally differenced series
+plot(seasonal_diff_vres_ts_d, main="Seasonally Differenced VRES Time Series", 
+     ylab = "Differenced GWh", 
+     xlab = NULL)
+
+# Reset to the default single plot layout
+par(mfrow = c(1, 1))
+```
+
+The first plot (Differenced VRES Time Series) shows the series after first-order differencing. While the trend is largely removed, there still appears to be seasonal fluctuations in the data, suggesting that seasonal differencing may be necessary.The variance seems somewhat stable, but there is some volatility toward the latter half of the series.
+
+The second plot (Seasonally Differenced VRES Time Series) shows the data after applying both first-order and seasonal differencing. The seasonality appears to be removed successfully. The variance still shows some volatility, particularly in the later years, but the overall pattern is more stable than the first-differenced series.
+
+```{r, vres stationarity, echo = FALSE, warning = F}
+# Perform ADF test to check stationarity
+adf.test(seasonal_diff_vres_ts_d)
+```
+
+```{r, log-differencing, echo = FALSE, warning = F}
+# Apply log transformation to the original VRES series
+log_vres_ts_d <- diff(vres_ts_d)
+
+# Apply differencing to the log-transformed series
+diff_log_vres_ts_d <- diff(log_vres_ts_d)
+seasonal_diff_log_vres_ts_d <- diff(diff_log_vres_ts_d, lag = 365)
+
+# Plot the seasonally differenced log-transformed series
+plot(seasonal_diff_log_vres_ts_d, main="Seasonally Differenced Log-Transformed VRES Time Series", 
+     ylab="Log-Differenced GWh", 
+     xlab = NULL)
+
+```
+
+The log-transformation and seasonal differencing have not sufficiently stabilized the variance, this indicates that the series may still exhibit heteroscedasticity (i.e., non-constant variance) which is why we consider a GARCH model.
+
+```{r warning=FALSE, vres garch, echo=FALSE}
+
+# Specify the model for the mean
+spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+                   mean.model = list(armaOrder = c(1, 1)),
+                   distribution.model = "norm")
+
+# Fit the GARCH model to the log-differenced series
+fit_garch <- ugarchfit(spec = spec, data = seasonal_diff_log_vres_ts_d)
+
+# Summary of the fitted GARCH model
+summary(fit_garch)
+
+# Plot the fitted volatility
+plot(fit_garch, which = 2)  # This will show the conditional variance (volatility)
+
+# Forecast using the fitted GARCH model
+garch_forecast <- ugarchforecast(fit_garch, n.ahead = 365)
+
+# Plot the forecasted volatility
+plot(garch_forecast, which = 1)  # Forecasted series
+plot(garch_forecast, which = 3)  # Forecasted conditional variance
+
+```
+
+#### 4. Forecast of Daily VRES Production
+
+Let's resume with the ACF and PACF since the GARCH model does not yield the desired result.
+
+```{r, acf pacf, echo = FALSE, warning = F}
+# ACF and PACF for the log-transformed differenced series
+acf(seasonal_diff_vres_ts_d)
+pacf(seasonal_diff_vres_ts_d)
+```
+
+```{r, acf pacf, echo = FALSE, warning = F}
+
+# Fit a SARIMA model with auto.arima to handle seasonality
+sarima_model <- auto.arima(vres_ts_d, seasonal = TRUE)
+
+# Summary of the fitted model
+summary(sarima_model)
+
+# Check residuals of the SARIMA model
+checkresiduals(sarima_model)
+
+# Forecast the next 365 days (or another period)
+sarima_forecast <- forecast(sarima_model, h = 500)
+
+# Plot the forecast
+plot(sarima_forecast, main="SARIMA Forecast for VRES Time Series")
+
+# Visualize the SARIMA forecast with confidence intervals
+autoplot(sarima_forecast) +
+  ggtitle("SARIMA Forecast for VRES Time Series") +
+  xlab("Date") +
+  ylab("Energy Production (GWh)")
+```
+
+### Daily Data of Day-Ahead Prices of Baseload
+
+#### 1. Visualization of Day-Ahead Prices
+
+```{r, plot of day-ahead, echo = FALSE, warning = F}
+
+# Create a line plot of Baseload_EUR_MWh over time
+ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
+  geom_line(color = "darkblue", size = 0.5) +
+  labs(title = "Baseload Energy Prices Over Time",
+       x = NULL, 
+       y = "Baseload (EUR/MWh)") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+
+```
+
+
+#### 2. Decomposition of Day-Ahead Prices
+
+```{r, decomposition of day-ahead, echo = FALSE, warning = F}
+# Convert the Baseload_EUR_MWh column to a time series object
+# Assuming daily data, we set frequency = 365 for yearly seasonality
+baseload_ts <- ts(d.d$Baseload_EUR_MWh, start = c(2017, 1), frequency = 365)
+
+# Decompose the time series into trend, seasonal, and random components
+decomp_baseload <- decompose(baseload_ts)
+
+# Plot the decomposition
+plot(decomp_baseload)
+
+```
+
+
+#### 3. Stationarity and Differencing of Day-Ahead Prices
+
+```{r, differencing of day-ahead, echo = FALSE, warning = F}
+# Apply first-order differencing to remove the trend
+diff_baseload_ts <- diff(baseload_ts, differences = 1)
+
+# Plot the differenced series
+plot(diff_baseload_ts, main="Differenced Baseload Time Series")
+
+# Apply seasonal differencing (assuming yearly seasonality with a frequency of 365)
+seasonal_diff_baseload_ts <- diff(diff_baseload_ts, lag = 365)
+
+# Plot the seasonally differenced series
+plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Series")
+
+```
+
+
+#### 4. Forecast of Day-Ahead Prices
+
+```{r, plot of day-ahead, echo = FALSE, warning = F}
+# Fit SARIMA model using auto.arima
+sarima_model_prices <- auto.arima(baseload_ts, seasonal = TRUE)
+
+# Summary of the fitted SARIMA model
+summary(sarima_model_prices)
+
+```
+
+
+
+### Time Series of Electricity Price Ranges (OLD - TO BE DELETED)
 
 Plot: Time series plot showing the average secondary electricity price ranges over time. Purpose: To visualize how the secondary price ranges fluctuate over time.
 
@@ -454,81 +879,13 @@ ggplot(d, aes(x = Timestamp)) +
                      values = c("Actual Load" = "blue", "Forecasted Load" = "orange"))
 ```
 
-# Models
+
 
 Suggest 2-3 models, done well. This means verifying the assumptions and making neccesary transformation. I suggest doing the results in a seperate section
 
 # Results
 
-## Model 1:
 
-for each model cover the important and interesting statistical models and how they relate the research question. Also, discuss model specific limitations in this context.
-
-## Model 2: VRES
-
-### Visualization
-```{r, vres ts prep, include = FALSE, warning = F}
-# Convert the Timestamp column to a Date-Time object
-d$Timestamp <- as.POSIXct(d$Timestamp, format="%Y-%m-%d %H:%M:%S")
-
-# Replace NAs in 'VRES_percent' with zero
-d$VRES_percent[is.na(d$VRES_percent)] <- 0
-
-# Convert VRES_percent into a time series object
-VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
-```
-
-```{r, plot ts of vres percent, echo = FALSE, warning = F}
-
-# Plot time series of VRES percent
-ggplot(d, aes(x = Timestamp)) +
-  geom_line(aes(y = VRES_ts, color = "VRES Percent")) +
-  labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
-       x = NULL,
-       y = "VRES") +
-  geom_smooth(aes(y = VRES_ts, color = "Linear Trend"), 
-              method = "lm", 
-              se = FALSE) +
-  scale_color_manual(name = "VRES", 
-                     values = c("VRES Percent" = "purple", "Linear Trend" = "orange"))
-```
-
-### Decomposition and Stationarity
-
-```{r, vres additive decomposition, echo = FALSE, warning = F}
-
-# Decompose the time series
-VRES_decomposed <- decompose(VRES_ts)
-plot(VRES_decomposed)
-```
-
-```{r, vres adf1, echo = FALSE, warning = F}
-
-# Perform Augmented Dickey-Fuller test
-adf.test(VRES_ts)
-```
-
-The Augmented Dickey-Fuller test has a p-value of 0.01 although the decomposition clearly shows a trend, seasonality and also a change in randomness. We suspect a decomposition of a multiplicative time series might help. A multiplicative decomposition assumes that the components (trend, seasonality, and noise) interact in a multiplicative manner. This is often suitable when the variability of the series increases as the level of the series increases, which might be indicated by the trend and seasonal patterns scaling with the overall level.
-
-Applying a log transformation to the data can stabilize the variance, which often makes the series more amenable to decomposition or modeling. The log transformation essentially converts a multiplicative relationship into an additive one.
-
-```{r, vres multiplicative decomposition, echo = FALSE, warning = F}
-
-# Apply log transformation (add a small constant to avoid log(0) issues)
-VRES_log <- log(VRES_ts + 1e-6)
-
-# Decompose the log-transformed time series
-VRES_log_decomposed <- decompose(VRES_log)
-plot(VRES_log_decomposed)
-```
-
-```{r, vres adf2, echo = FALSE, warning = F}
-
-# Perform Augmented Dickey-Fuller test
-adf.test(VRES_log)
-```
-
-### SARIMA and Forecast
 
 ## Limitations
 

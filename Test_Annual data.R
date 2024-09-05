@@ -11,7 +11,7 @@ library(rugarch)
 # Preparation ------------------------------------------------------------------
 
 # Set working directory
-setwd("C:/Users/va2/OneDrive - EY/Desktop/EY/Privat/HSLU/2nd Semester/Sustainability Analytics")
+setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 
 # Load the datasets
 energy_production <- read_csv("ogd104_stromproduktion_swissgrid.csv")
@@ -26,26 +26,30 @@ head(energy_production)
 head(energy_prices)
 
 # Merge the reshaped energy production data with the energy prices data
-combined_data <- merge(energy_prices, energy_production, by="Datum", all.x=TRUE)
+d.d <- merge(energy_prices, energy_production, by="Datum", all.x=TRUE)
 
 # Fill any remaining NAs with 0 (in case there were dates in energy_prices not in energy_production)
-combined_data[is.na(combined_data)] <- 0
+d.d[is.na(d.d)] <- 0
 
 # View the combined data
-head(combined_data)
+head(d.d)
 
 # Time series data prep --------------------------------------------------------
 
 # Create a time series for Baseload prices
-ts_baseload_prices <- ts(combined_data$Baseload_EUR_MWh, start=c(2017, 1), frequency=365)
+ts_baseload_prices <- ts(d.d$Baseload_EUR_MWh, start=c(2017, 1), frequency=365)
 
 # Create a time series for Kernkraft production
-ts_kernkraft <- ts(combined_data$Kernkraft, start=c(2017, 1), frequency=365)
+ts_kernkraft <- ts(d.d$Kernkraft, start=c(2017, 1), frequency=365)
+
+# Create a time series for Kernkraft production
+ts_kernkraft <- ts(d.d$Kernkraft, start=c(2017, 1), frequency=365)
 
 # Create a time series for Photovoltaik production
-ts_photovoltaik <- ts(combined_data$Photovoltaik, start=c(2017, 1), frequency=365)
+ts_photovoltaik <- ts(d.d$Photovoltaik, start=c(2017, 1), frequency=365)
 
-ts_thermische <- ts(combined_data$Thermische, start=c(2017, 1), frequency=365)
+# Create a time series for Photovoltaik production
+ts_thermische <- ts(d.d$Thermische, start=c(2017, 1), frequency=365)
 
 # Plot ts data -----------------------------------------------------------------
 
