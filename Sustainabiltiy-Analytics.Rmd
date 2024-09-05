@@ -216,15 +216,54 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 # Exploratory Data Analysis (EDA)
 
-```{r, EDA, include = TRUE}
+```{r VRES, include = TRUE, echo = FALSE}
+
+
+
+
+
+# VRES_percent Range
+
+min_VRES <- min(d.h$VRES_percent, na.rm = TRUE)
+max_VRES <- max(d.h$VRES_percent, na.rm = TRUE)
+
+min_VRES
+max_VRES
+
+
+# VRES over Time by Time
+
+ggplot(d.h, aes(x = Timestamp, y = VRES_percent)) + 
+  geom_line(color = "blue") + 
+  ggtitle("VRES_percent Over Time") +
+  xlab("Time") +
+  ylab("VRES_percent (%)") +
+  theme_minimal()
+
+ 
+```
+
+The resulting graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. The graph exhibits a cyclical wave pattern, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
+
+Toward the end of the graph, there's a noticeable spike or "bump," where the VRES_percent doubles the usual peak levels observed earlier. However, even with this significant increase, the maximum VRES_percent only reaches 0.27% of the total energy demand. This suggests that despite the seasonal variations and occasional spikes, the contribution of renewable energy remains relatively small in the overall energy mix
+
+```{r, Cost of Secondary Control Energy, include = TRUE}
 
 head(d)
+head(d.h)
 
-# Histogram for avg_secondary_price_range
-ggplot(d, aes(x = avg_secondary_price_range)) + 
-  geom_histogram(binwidth = 10, fill = "blue", color = "black") +
-  ggtitle("Histogram of avg_secondary_price_range")
 
+# Hisd.h# Histogram for avg_secondary_price_range
+ggplot(d.h, aes(x = cost_pos_sec_EUR)) + 
+  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
+  scale_y_log10() +
+  ggtitle("Cost of Positive Secondary Control Energy in EUR")
+
+# Hisd.h# Histogram for avg_secondary_price_range
+ggplot(d.h, aes(x = cost_neg_sec_EUR)) + 
+  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
+  scale_y_log10() +
+  ggtitle("Cost of Negative Secondary Control Energy in EUR")
 
 
 
@@ -240,33 +279,58 @@ max_tpr <- max(d$avg_tertiary_price_range, na.rm = TRUE)
 min_tpr
 max_tpr
 
-# Histogram for avg_tertiary_price_range with log scale on the y-axis
-ggplot(d, aes(x = avg_tertiary_price_range)) + 
-  geom_histogram(binwidth = 100, fill = "green", color = "black") +
-  scale_y_log10() +  # logarithmic scale for y-axis
-  ggtitle("Histogram of avg_tertiary_price_range (Log Scale)")
+
+# Hisd.h# Histogram for avg_secondary_price_range
+ggplot(d.h, aes( x = cost_pos_ter_EUR)) + 
+  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
+  scale_y_log10() +
+  ggtitle("Cost of Positive Tertiary Control Energy in EUR")
+
+ggplot(d.h[d.h$cost_pos_ter_EUR != 0, ], aes(x = cost_pos_ter_EUR)) + 
+  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
+  scale_y_log10() +
+  ggtitle("Cost of Positive Tertiary Control Energy in EUR")
+
+
+ggplot(d.h[d.h$cost_pos_ter_EUR != 0, ], aes(x = cost_pos_ter_EUR)) + 
+  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
+  scale_y_continuous(trans = 'log10') +  # Instead of scale_y_log10()
+  ggtitle("Cost of Positive Tertiary Control Energy in EUR") +
+  annotation_logticks(sides = "l")       # Optional, to show log ticks
+
+
+
+
+
+# Hisd.h# Histogram for avg_secondary_price_range
+ggplot(d.h, aes(x = cost_neg_ter_EUR)) + 
+  geom_histogram(binwidth = 100, fill = "blue", color = "black") +
+  scale_y_log10() +
+  ggtitle("Cost of Negative Tertiary Control Energy in EUR")
+
+
+
+
+
+ggplot(d.h, aes(x = cost_pos_ter_EUR)) +
+geom_density()
+
+ggplot(d.h, aes(x = avg_secondary_price_range)) +
+  geom_histogram(binwidth = 0.5, fill = "skyblue", color = "black") +
+  theme_minimal()
+
+# Combine the plots vertically
+p2 / p1
+
+p1 <- ggplot(d.h[d.h$cost_pos_ter_EUR != 0, ], aes(x = 1, y = cost_pos_ter_EUR)) +
+  geom_boxplot() +
+  coord_flip()
+p1
+
 
 ```
 
-```{r VRES, include = TRUE, echo = FALSE}
 
-# VRES_percent Range
-
-min_VRES <- min(d$VRES_percent, na.rm = TRUE)
-max_VRES <- max(d$VRES_percent, na.rm = TRUE)
-
-min_VRES
-max_VRES
-
-
-
-# Histogram for VRES_percent
-ggplot(d, aes(x = VRES_percent)) + 
-  geom_histogram(binwidth = 0.01, fill = "red", color = "black") +
-  scale_y_log10() + 
-  ggtitle("Histogram of VRES_percent")
-
-```
 
 ```{r Wind and Solar, include = TRUE, echo = FALSE}
 
