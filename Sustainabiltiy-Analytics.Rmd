@@ -88,7 +88,6 @@ combined_data <- combined_data %>%
                                       # ended up in the dataframe
 ```
 
-
 ```{r, manipulations 1, warning = F, include= F, cache= T}
 combined_data <- combined_data %>% 
   rename(
@@ -120,7 +119,6 @@ sums_2021 <- combined_data %>%
     filter(year(Timestamp) == 2021) %>%
     summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
 ```
-
 
 ```{r, manipulations 2, warning = F, include= F, cache= T}
 hourly_summary <- combined_data %>%
@@ -159,7 +157,6 @@ sums_2020 <- hourly_summary %>%
     summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
 ```
 
-
 ```{r, importing renwable share, include = F , warning = F, include= F}
 ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
 ren_gen <- ren_gen %>% select(-1) %>%   
@@ -171,20 +168,17 @@ ren_gen <- ren_gen %>% select(-1) %>%
 
 ```
 
-
 ```{r, join, include= F, warning = F }
 d <- left_join(hourly_summary, ren_gen, by = "Timestamp") 
 # merging on the hour
 
 ```
 
-
 ```{r, Test d, warning = F, include= F}
 sums_2020 <- d %>%
     filter(year(Timestamp) == 2020) %>%
     summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE)))
 ```
-
 
 ```{r, adding total cost, include = F, warning = F  }
 d <- d %>% 
@@ -272,7 +266,6 @@ head(d.d)
 remove(energy_production, energy_prices)
 ```
 
-
 ```{r, Test d.h, warning = F, include= F}
 sums_2019 <- d.h %>%
     filter(year(Timestamp) == 2019) %>%
@@ -291,54 +284,53 @@ sums_2021 <- d.h %>%
 
 # Introduction
 
-Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce none to little direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge.
-[^sdg]: <https://sdgs.un.org/goals> 
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[\^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge. [\^sdg]: <https://sdgs.un.org/goals>
 
 The lack of direct control over production with VRES presents a huge challenge to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
 
-Worst yet for all energy producer, the addition of electricity from VRES has the possibility to:
+The addition of electricity from VRES has the possibility to:
 
 1.  Drastically lower electricity prices.
 2.  Increase price volatility.
+3.  Rapidly change the quantity of electricity available on the grid in either direction.
 
 The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price. If they cannot profit - maximize, they will loss - minimize.
 
 The second claim is the case because meteorological events tend to be fairly consistent across an area. When one wind / solar farm is producing, so are the ones around it. This means there is huge downward pressure on prices during periods of favorable VRES production and none at all during unfavorable conditions.
 
+The third claim is particularly relevant for control energy's price. The reason for this is described in the next two points.
+
+## Control Energy
+
+One aspect of electricity prices is the price paid for control energy. This is the short term (up to 15 min) electricity supply used to keep the grid at a constant frequency, due to unforeseen changes in supply and demand. It is necessary since the amount of energy consumed and produced must always be identical. The increased penetration of VRES, which cannot be steered by operators means that the purchase of such energy should be increasing with more VRES installed on the grid in recent years.
+
 ## Relevance
 
-Policymakers would be interested in these results, particularly those countries considering feed-in-tariffs (FIT).
-
-FIT - paying a fixed price for renewable energy, if the price is volatile, government's expenditure will also be.
-
-Consumers of energy (so most people), will also want to know how prices could fluctuate in the future.
-
-Providers of energy storage, who require volatility in prices to make.
-
-*more will be added here*
+If the amount of control electricity purchased by Transmission System Operators increases then this means costs will be passed down to consumers. Since electricity is a primary input in the economy, higher prices will be reflected across the vast majority of goods and services. This is an undesirable outcome. It is therefore important for policymakers, stakeholder and the public to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
 
 ## Literature Review
 
-Although generally speaking the academic literature identifies increases V-RES sources as being correlated with volatile prices, it is unclear whether these effects are generalizable to the Swiss grid without further research. A number of studies find an increase in variability as V-RES penetration increases. Amongst them: @pereiradasilva2019 who use EGARCH time series and regression while studying the Iberian power market; @frauendorfer2018 who find that the Swiss are "importing" lower German power prices during peak solar production, as Germany has much more solar energy sources than the Swiss. Finally, the authors @dong2019 find that the Swedish have more stable prices due to the relativley high proportion of non variable fossil and hydropower than the Danes, who are more reliant on V-RES in the form of wind and solar.
+The academic literature on VRES's effect on control energy is fairly sparse. Using the search terms "control energy" and "(variable) renewable energy", only one relevant paper was found. @hirth_control_2013 have found that the inclusion of VRES from 2008-2013 decreases procurement cost of control power by 50%, presumably permitting lower prices for end consumers. The broader literature on the effect of VRES on electricity supply is broader.
 
-Other studies are more conflicted, such as @rintamäki2017 who compare Germany and Danish prices and wind that the effect of increasing wind production on day ahead prices is not constant. They caution that interconnectivity with other grids is important in determining the direction of effect. As such, this is further motivation to study each nation's grid independently, as there may be a large number of variables influencing the price. Although the previously mentioned @frauendorfer2018 paper studies the Swiss grid, it does so in the context of transnational energy trade, and not increases in domestic capacities. This is the gap we are evaluating.
+These areas generally focus on both variability of supply and prices. Amongst them: @pereiradasilva2019 who use EGARCH time series and regression while studying the Iberian power market; @frauendorfer2018 who find that the Swiss are "importing" lower German power prices during peak solar production, as Germany has much more solar energy sources than the Swiss. Finally, the authors @dong2019 find that the Swedish have more stable prices due to the relativley high proportion of non variable fossil and hydropower than the Danes, who are more reliant on VRES in the form of wind and solar. Other studies in the area are more conflicted, such as @rintamäki2017 who compare Germany and Danish prices and wind that the effect of increasing wind production on day ahead prices is not constant. The point is that increasing VRES leads to variability in supply, which presumably means more cost for balancing out an unpredictable supply when the predictions are wrong.
 
-## Sources
+It is the purpose of this study to see whether and if so, to what extent renewable energy sources are related to increasing costs of control energy.
+
+## Data Sources
 
 ### Electricity Prices
 
 Swissgrid provides data on 15-minute electricity prices, divided into secondary and tertiary.
 
-Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
+Access: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 ### Generation Share Wind and Solar
 
-<https://data.open-power-system-data.org/time_series>
+Open Data on VRES Production in Europe, including Switzerland. Wind and Solar are the principal VRES.
 
-\*more will be added here
+Access: <https://data.open-power-system-data.org/time_series>
 
 # Exploratory Data Analysis (EDA)
-
 
 VRES don't account for a lot of Energy
 
@@ -473,11 +465,6 @@ duplicate_rows
 
 The above plot visualizes the total yearly costs in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years.
 
-
-
-
-
-
 ```{r Wind and Solar, include = TRUE, echo = FALSE}
 
 # Histogram for CH_solar_generation_actual
@@ -489,17 +476,14 @@ ggplot(d, aes(x = CH_solar_generation_actual)) +
 
 ```
 
-
-
 ## Time Series of Hourly Data TO BE ADJUSTED)
 
 \<\<<descriptions and interpretations to be added later>\>\>
 
-
-
 ### VRES
 
 ### Visualization
+
 ```{r, vres ts prep, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
 d$Timestamp <- as.POSIXct(d$Timestamp, format="%Y-%m-%d %H:%M:%S")
@@ -750,7 +734,6 @@ ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
 
 ```
 
-
 #### 2. Decomposition of Day-Ahead Prices
 
 ```{r, decomposition of day-ahead, echo = FALSE, warning = F}
@@ -765,7 +748,6 @@ decomp_baseload <- decompose(baseload_ts)
 plot(decomp_baseload)
 
 ```
-
 
 #### 3. Stationarity and Differencing of Day-Ahead Prices
 
@@ -783,7 +765,6 @@ seasonal_diff_baseload_ts <- diff(diff_baseload_ts, lag = 365)
 plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Series")
 
 ```
-
 
 #### 4. Forecast of Day-Ahead Prices
 
@@ -803,8 +784,6 @@ autoplot(sarima_forecast_baseload) +
   xlab("Date") +
   ylab("Baseload (EUR)")
 ```
-
-
 
 ### Time Series of Electricity Price Ranges (OLD - TO BE DELETED)
 
@@ -880,13 +859,9 @@ ggplot(d, aes(x = Timestamp)) +
                      values = c("Actual Load" = "blue", "Forecasted Load" = "orange"))
 ```
 
-
-
 Suggest 2-3 models, done well. This means verifying the assumptions and making neccesary transformation. I suggest doing the results in a seperate section
 
 # Results
-
-
 
 ## Limitations
 
