@@ -326,7 +326,7 @@ Access: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 ### Generation Share Wind and Solar
 
-Open Data on VRES Production in Europe, including Switzerland. Wind and Solar are the principal VRES.
+Open Data on VRES Production in Europe, including Switzerland.
 
 Access: <https://data.open-power-system-data.org/time_series>
 
