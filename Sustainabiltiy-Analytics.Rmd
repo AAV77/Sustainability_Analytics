@@ -22,6 +22,7 @@ library(ggplot2)
 library(forecast)
 library(tseries)
 library(rugarch)
+library(scales)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -341,9 +342,6 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 ```{r VRES, include = TRUE, echo = FALSE}
 
 
-
-
-
 # VRES_percent Range
 
 min_VRES <- min(d.h$VRES_percent, na.rm = TRUE)
@@ -371,27 +369,61 @@ Toward the end of the graph, there's a noticeable spike or "bump," where the VRE
 
 ```{r, Cost of Secondary Control Energy, include = TRUE}
 
-head(d)
-head(d.h)
+
+# Cost aggregated by Year
+colors()
+
+# Convert the 'Timestamp' column to POSIXct format
+d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format = "%Y-%m-%d %H:%M:%S")
+
+# Extract the year from the 'Timestamp' column
+d.h$year <- year(d.h$Timestamp)
+
+# Group by 'year' and summarize the total cost for each year
+df_yearly_cost <- d.h %>%
+  group_by(year) %>%
+  summarise(total_cost = sum(cost_neg_sec_EUR, na.rm = TRUE))
 
 
-# Hisd.h# Histogram for avg_secondary_price_range
-ggplot(d.h, aes(x = cost_pos_sec_EUR)) + 
-  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
-  scale_y_log10() +
-  ggtitle("Cost of Positive Secondary Control Energy in EUR")
+# Filter out the year 2024 and group by 'year', then summarize the total cost for each year
+df_yearly_cost <- d.h %>%
+  filter(year != 2024) %>%  # Exclude the year 2024
+  group_by(year) %>%
+  summarise(total_cost = sum(cost_neg_sec_EUR, na.rm = TRUE)) #y-axis with 'Mio' and commas
 
-# Hisd.h# Histogram for avg_secondary_price_range
-ggplot(d.h, aes(x = cost_neg_sec_EUR)) + 
-  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
-  scale_y_log10() +
-  ggtitle("Cost of Negative Secondary Control Energy in EUR")
+# Reshape the data into long format, selecting all four relevant columns
+d.h_long <- d.h %>%
+  filter(year != 2024) %>%  # Exclude the year 2024
+  pivot_longer(cols = c(cost_pos_sec_EUR, cost_neg_sec_EUR, cost_pos_ter_EUR, cost_neg_ter_EUR), 
+               names_to = "cost_type", values_to = "cost_value")
+
+# Group by 'year' and 'cost_type', then summarize the total cost for each
+df_yearly_cost <- d.h_long %>%
+  group_by(year, cost_type) %>%
+  summarise(total_cost = sum(cost_value, na.rm = TRUE)) %>%
+  ungroup()
+
+# Create a bar plot for the sum of costs per year, with different colors for each 'cost_type'
+ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cost_type)) +  # Y-axis in millions
+  geom_bar(stat = "identity", position = "dodge", color = "black") +  # Dodge to separate the bars
+  ggtitle("Total Costs of Secondary and Tertiary Control Energy per Year in EUR") +
+  xlab("Year") +
+  ylab("Total Cost (Million EUR)") +
+  scale_y_continuous(labels = label_number(suffix = " Mio", big.mark = ",")) +  # Format y-axis
+
+  # Use the correct order of colors and labels according to the levels of cost_type
+  scale_fill_manual(values = c("skyblue2", "lightblue1", "gold", "yellow"), 
+                    breaks = c("cost_pos_sec_EUR", "cost_neg_sec_EUR", "cost_pos_ter_EUR", "cost_neg_ter_EUR"),
+                    labels = c("Pos. Sec.", "Neg. Sec.", "Pos. Ter.", "Neg. Ter.")) +  # Custom colors and labels
+
+  theme_minimal() +
+  theme(legend.title = element_blank())  # Hide the legend title
 
 
 
 ```
 
-This first Barchart shows the distribution of the average price range of secondary control energy. The energy price is averaged within a 60 minutes time period and in Euro/MWh.
+The above plot visualizes the total yearly costs in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years.
 
 ```{r Tertiary Price Range, include = TRUE, echo = FALSE, fig.height = 3, fig.width = 6, fig.align='center'}
 
