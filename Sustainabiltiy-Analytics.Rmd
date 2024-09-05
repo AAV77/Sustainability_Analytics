@@ -729,11 +729,19 @@ plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Serie
 
 ```{r, plot of day-ahead, echo = FALSE, warning = F}
 # Fit SARIMA model using auto.arima
-sarima_model_prices <- auto.arima(baseload_ts, seasonal = TRUE)
+sarima_model_baseload <- auto.arima(baseload_ts, seasonal = TRUE)
 
 # Summary of the fitted SARIMA model
-summary(sarima_model_prices)
+summary(sarima_model_baseload)
 
+# Forecast the next 365 days (or another period)
+sarima_forecast_baseload <- forecast(sarima_model_prices, h = 500)
+
+# Visualize the SARIMA forecast with confidence intervals
+autoplot(sarima_forecast_baseload) +
+  ggtitle("SARIMA Forecast for Baseload Time Series") +
+  xlab("Date") +
+  ylab("Baseload (EUR)")
 ```
 
 
