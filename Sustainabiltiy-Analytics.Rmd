@@ -455,7 +455,7 @@ VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming
 
 # Plot time series of VRES percent
 ggplot(d, aes(x = Timestamp)) +
-  geom_line(aes(y = VRES_ts, color = "VRES Percent")) +
+  geom_line(aes(y = VRES_ts, color = "VRES Percent", size = 0.5)) +
   labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
        x = NULL,
        y = "VRES") +
@@ -559,6 +559,8 @@ head(vres_decomp_d$random)
 
 The decomposition reveals a clear linear trend and strong seasonal patterns, with some variability in both the seasonal component and residuals. While the seasonal noise is expected due to the nature of renewable energy sources like photovoltaic and wind, it does not obscure the overall pattern. The fluctuations in the residuals suggest potential volatility of variance, but this can be addressed by examining the residuals further after modeling.
 
+#### 3. Stationarity and Differencing Daily VRES Production
+
 First, we apply regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
 
 ```{r, differencing, echo = FALSE, warning = F}
@@ -638,6 +640,8 @@ plot(garch_forecast, which = 3)  # Forecasted conditional variance
 
 ```
 
+#### 4. Forecast of Daily VRES Production
+
 Let's resume with the ACF and PACF since the GARCH model does not yield the desired result.
 
 ```{r, acf pacf, echo = FALSE, warning = F}
@@ -669,6 +673,45 @@ autoplot(sarima_forecast) +
   xlab("Date") +
   ylab("Energy Production (GWh)")
 ```
+
+### Daily Data of Day-Ahead Prices of Baseload
+
+#### 1. Visualization of Day-Ahead Prices
+
+```{r, plot of day-ahead, echo = FALSE, warning = F}
+
+# Create a line plot of Baseload_EUR_MWh over time
+ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
+  geom_line(color = "darkblue", size = 0.5) +
+  labs(title = "Baseload Energy Prices Over Time",
+       x = NULL, 
+       y = "Baseload (EUR/MWh)") +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+
+```
+
+
+#### 2. Decomposition of Day-Ahead Prices
+
+```{r, plot of day-ahead, echo = FALSE, warning = F}
+
+```
+
+
+#### 3. Stationarity and Differencing of Day-Ahead Prices
+
+```{r, plot of day-ahead, echo = FALSE, warning = F}
+
+```
+
+
+#### 4. Forecast of Day-Ahead Prices
+
+```{r, plot of day-ahead, echo = FALSE, warning = F}
+
+```
+
+
 
 ### Time Series of Electricity Price Ranges (OLD - TO BE DELETED)
 
