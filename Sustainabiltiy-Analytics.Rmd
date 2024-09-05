@@ -693,14 +693,34 @@ ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
 
 #### 2. Decomposition of Day-Ahead Prices
 
-```{r, plot of day-ahead, echo = FALSE, warning = F}
+```{r, decomposition of day-ahead, echo = FALSE, warning = F}
+# Convert the Baseload_EUR_MWh column to a time series object
+# Assuming daily data, we set frequency = 365 for yearly seasonality
+baseload_ts <- ts(d.d$Baseload_EUR_MWh, start = c(2017, 1), frequency = 365)
+
+# Decompose the time series into trend, seasonal, and random components
+decomp_baseload <- decompose(baseload_ts)
+
+# Plot the decomposition
+plot(decomp_baseload)
 
 ```
 
 
 #### 3. Stationarity and Differencing of Day-Ahead Prices
 
-```{r, plot of day-ahead, echo = FALSE, warning = F}
+```{r, differencing of day-ahead, echo = FALSE, warning = F}
+# Apply first-order differencing to remove the trend
+diff_baseload_ts <- diff(baseload_ts, differences = 1)
+
+# Plot the differenced series
+plot(diff_baseload_ts, main="Differenced Baseload Time Series")
+
+# Apply seasonal differencing (assuming yearly seasonality with a frequency of 365)
+seasonal_diff_baseload_ts <- diff(diff_baseload_ts, lag = 365)
+
+# Plot the seasonally differenced series
+plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Series")
 
 ```
 
@@ -708,6 +728,11 @@ ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
 #### 4. Forecast of Day-Ahead Prices
 
 ```{r, plot of day-ahead, echo = FALSE, warning = F}
+# Fit SARIMA model using auto.arima
+sarima_model_prices <- auto.arima(baseload_ts, seasonal = TRUE)
+
+# Summary of the fitted SARIMA model
+summary(sarima_model_prices)
 
 ```
 
