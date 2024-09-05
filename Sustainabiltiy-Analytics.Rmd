@@ -339,6 +339,53 @@ Link: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 # Exploratory Data Analysis (EDA)
 
+
+VRES don't account for a lot of Energy
+
+```{r Wind and Solar, include = TRUE, echo = FALSE}
+
+# Filter the dataset to include only data up to the year 2020 (As for those Data only till 2020 are available)
+d.h_upto2020 <- d.h %>%
+  filter(Timestamp <= as.Date("2020-12-31"))  
+
+
+
+# Plot for Wind Onshore Generation
+ggplot(d.h_upto2020, aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW)) + 
+  geom_line(color = "blue", size = 1) + 
+  ggtitle("Wind Onshore Generation Over Time (Up to 2020)") +
+  xlab("Time") +
+  ylab("Wind Onshore Generation (MW)") +
+  theme_minimal()
+
+
+# Plot for Solar Generation
+ggplot(d.h_upto2020, aes(x = Timestamp, y = CH_solar_generation_actual_MW)) + 
+  geom_line(color = "orange", size = 1) + 
+  ggtitle("Solar Generation Over Time (Up to 2020)") +
+  xlab("Time") +
+  ylab("Solar Generation (MW)") +
+  theme_minimal()
+
+
+
+# Plot the filtered data with wind in the foreground and solar in the background
+ggplot(d.h_upto2020) + 
+  # Solar generation in the background
+  geom_line(aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) + 
+  # Wind generation in the foreground
+  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind Onshore"), size = 1) + 
+  ggtitle("Wind and Solar Generation Over Time (Up to 2020)") +
+  xlab("Time") +
+  ylab("Generation (MW)") +
+  scale_color_manual(values = c("Wind Onshore" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  labs(color = "Generation Type")
+
+
+
+```
+
 ```{r VRES, include = TRUE, echo = FALSE}
 
 
@@ -351,11 +398,11 @@ min_VRES
 max_VRES
 
 
-# VRES over Time by Time
 
-ggplot(d.h, aes(x = Timestamp, y = VRES_percent)) + 
+# Plot the filtered data
+ggplot(d.h_upto2020, aes(x = Timestamp, y = VRES_percent)) + 
   geom_line(color = "blue") + 
-  ggtitle("VRES_percent Over Time") +
+  ggtitle("VRES_percent Over Time (Up to 2020)") +
   xlab("Time") +
   ylab("VRES_percent (%)") +
   theme_minimal()
@@ -363,7 +410,7 @@ ggplot(d.h, aes(x = Timestamp, y = VRES_percent)) +
  
 ```
 
-The resulting graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. The graph exhibits a cyclical wave pattern, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
+The above graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. The graph exhibits a cyclical wave pattern, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
 
 Toward the end of the graph, there's a noticeable spike or "bump," where the VRES_percent doubles the usual peak levels observed earlier. However, even with this significant increase, the maximum VRES_percent only reaches 0.27% of the total energy demand. This suggests that despite the seasonal variations and occasional spikes, the contribution of renewable energy remains relatively small in the overall energy mix
 
@@ -371,7 +418,6 @@ Toward the end of the graph, there's a noticeable spike or "bump," where the VRE
 
 
 # Cost aggregated by Year
-colors()
 
 # Convert the 'Timestamp' column to POSIXct format
 d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format = "%Y-%m-%d %H:%M:%S")
@@ -419,70 +465,16 @@ ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cos
   theme_minimal() +
   theme(legend.title = element_blank())  # Hide the legend title
 
-
+# Identify exact duplicate rows
+duplicate_rows <- d.h[duplicated(d.h) | duplicated(d.h, fromLast = TRUE), ]
+duplicate_rows
 
 ```
 
 The above plot visualizes the total yearly costs in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years.
 
-```{r Tertiary Price Range, include = TRUE, echo = FALSE, fig.height = 3, fig.width = 6, fig.align='center'}
-
-min_tpr <- min(d$avg_tertiary_price_range, na.rm = TRUE)
-max_tpr <- max(d$avg_tertiary_price_range, na.rm = TRUE)
-
-min_tpr
-max_tpr
 
 
-# Hisd.h# Histogram for avg_secondary_price_range
-ggplot(d.h, aes( x = cost_pos_ter_EUR)) + 
-  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
-  scale_y_log10() +
-  ggtitle("Cost of Positive Tertiary Control Energy in EUR")
-
-ggplot(d.h[d.h$cost_pos_ter_EUR != 0, ], aes(x = cost_pos_ter_EUR)) + 
-  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
-  scale_y_log10() +
-  ggtitle("Cost of Positive Tertiary Control Energy in EUR")
-
-
-ggplot(d.h[d.h$cost_pos_ter_EUR != 0, ], aes(x = cost_pos_ter_EUR)) + 
-  geom_histogram(binwidth = 1000, fill = "blue", color = "black") +
-  scale_y_continuous(trans = 'log10') +  # Instead of scale_y_log10()
-  ggtitle("Cost of Positive Tertiary Control Energy in EUR") +
-  annotation_logticks(sides = "l")       # Optional, to show log ticks
-
-
-
-
-
-# Hisd.h# Histogram for avg_secondary_price_range
-ggplot(d.h, aes(x = cost_neg_ter_EUR)) + 
-  geom_histogram(binwidth = 100, fill = "blue", color = "black") +
-  scale_y_log10() +
-  ggtitle("Cost of Negative Tertiary Control Energy in EUR")
-
-
-
-
-
-ggplot(d.h, aes(x = cost_pos_ter_EUR)) +
-geom_density()
-
-ggplot(d.h, aes(x = avg_secondary_price_range)) +
-  geom_histogram(binwidth = 0.5, fill = "skyblue", color = "black") +
-  theme_minimal()
-
-# Combine the plots vertically
-p2 / p1
-
-p1 <- ggplot(d.h[d.h$cost_pos_ter_EUR != 0, ], aes(x = 1, y = cost_pos_ter_EUR)) +
-  geom_boxplot() +
-  coord_flip()
-p1
-
-
-```
 
 
 
@@ -490,45 +482,14 @@ p1
 
 # Histogram for CH_solar_generation_actual
 ggplot(d, aes(x = CH_solar_generation_actual)) + 
-  geom_histogram(binwidth = 1, fill = "red", color = "black") +
+  geom_histogram(binwidth = 10, fill = "red", color = "black") +
+  scale_y_log10()
   ggtitle("Histogram of CH_solar_generation_actual")
 
 
-# Scatter plot between CH_solar_generation_actual and CH_wind_onshore_generation_actual
-ggplot(d, aes(x = CH_solar_generation_actual, y = CH_wind_onshore_generation_actual)) +
-  geom_point(color = "blue") +
-  ggtitle("Scatter plot of Solar vs Wind Generation")
-
-# Scatter plot between CH_solar_generation_actual and CH_wind_onshore_generation_actual with jitter
-ggplot(d, aes(x = CH_solar_generation_actual, y = CH_wind_onshore_generation_actual)) +
-  geom_jitter(color = "blue", width = 0.1, height = 0.1) +
-  ggtitle("Scatter plot of Solar vs Wind Generation with Jitter")
-
 ```
 
-```{r Wind and Solar, include = TRUE, echo = FALSE}
 
-# Reshape the data into a long format
-library(tidyr)
-
-data_long <- d %>%
-  pivot_longer(cols = c(CH_solar_generation_actual, CH_wind_onshore_generation_actual), 
-               names_to = "Type", values_to = "Generation") %>%
-  mutate(Type = ifelse(Type == "CH_solar_generation_actual", "Solar", "Wind"))
-
-# Faceted Histogram
-ggplot(data_long, aes(x = Generation, fill = Type)) + 
-  geom_histogram(binwidth = 10, color = "black", alpha = 0.7) +
-  facet_wrap(~ Type, scales = "free_x") + 
-  ggtitle("Comparison of Wind Onshore and Solar Generation") +
-  labs(x = "Generation", y = "Frequency") +
-  theme_minimal()
-
-
-
-
-
-```
 
 ## Time Series of Hourly Data TO BE ADJUSTED)
 
