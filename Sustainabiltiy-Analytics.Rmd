@@ -22,6 +22,7 @@ library(ggplot2)
 library(forecast)
 library(tseries)
 library(rugarch)
+library(vars)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -498,42 +499,100 @@ ggplot(data_long, aes(x = Generation, fill = Type)) +
 
 ```
 
-## Time Series of Hourly Data TO BE ADJUSTED)
+## Time Series of Hourly Data (TO BE ADJUSTED)
 
 \<\<<descriptions and interpretations to be added later>\>\>
 
+### Total Cost of Control Energy
 
-
-### VRES
-
-### Visualization
-```{r, vres ts prep, include = FALSE, warning = F}
-# Convert the Timestamp column to a Date-Time object
-d$Timestamp <- as.POSIXct(d$Timestamp, format="%Y-%m-%d %H:%M:%S")
-
-# Replace NAs in 'VRES_percent' with zero
-d$VRES_percent[is.na(d$VRES_percent)] <- 0
-
-# Convert VRES_percent into a time series object
-VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
-```
+### 1. Visualization of Control Costs
 
 ```{r, plot ts of vres percent, echo = FALSE, warning = F}
 
-# Plot time series of VRES percent
-ggplot(d, aes(x = Timestamp)) +
-  geom_line(aes(y = VRES_ts, color = "VRES Percent", size = 0.5)) +
-  labs(title = "Time Series of Variable Renewable Energy Sources Percentage",
-       x = NULL,
-       y = "VRES") +
-  geom_smooth(aes(y = VRES_ts, color = "Linear Trend"), 
-              method = "lm", 
-              se = FALSE) +
-  scale_color_manual(name = "VRES", 
-                     values = c("VRES Percent" = "purple", "Linear Trend" = "orange"))
+# Create the plot for VRES_percent with a linear trend line
+ggplot(d.h, aes(x = as.Date(Timestamp), y = total_cost_EUR)) +
+  geom_line(color = "darkblue") +                     
+  geom_smooth(method = "lm", color = "black", se = FALSE) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  labs(title = "Cost of Control Energy Over Time",
+       x = NULL, 
+       y = "Cost in EUR per kWh")
 ```
 
-### Decomposition and Stationarity
+### 2. Decomposition of Control Costs
+
+```{r, costs ts prep, include = FALSE, warning = F}
+# Convert the Timestamp column to a Date-Time object
+d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
+
+# Replace NAs in 'total_cost_EUR' with zero
+d.h$total_cost_EUR[is.na(d.h$total_cost_EUR)] <- 0
+
+# Convert total_cost_EUR into a time series object
+total_cost_EUR_ts <- ts(d.h$total_cost_EUR, start = c(2015, 1), end = c(2020, 8), frequency=24*365.25)
+```
+
+```{r, costs additive decomposition, echo = FALSE, warning = F}
+
+# Decompose the time series
+cost_decomposed <- decompose(total_cost_EUR_ts)
+plot(cost_decomposed)
+```
+
+### 3. Stationarity of Control Costs
+
+```{r, differencing of day-ahead, echo = FALSE, warning = F}
+
+# Apply log transformation (add a small constant to avoid log(0) issues)
+costs_log <- log(total_cost_EUR_ts + 1e-6)
+
+# Apply first-order differencing to remove the trend
+costs_log_diff <- diff(costs_log, differences = 1)
+sum(is.na(costs_log_diff))
+costs_log_diff <- na.approx(costs_log_diff)
+sum(is.na(costs_log_diff))
+
+# Plot the differenced series
+plot(costs_log_diff, main="Differenced Total Costs Time Series")
+
+# Apply seasonal differencing (assuming yearly seasonality with a frequency of 365)
+costs_log_diff_seasonal <- diff(costs_log_diff, lag = 365)
+
+# Plot the seasonally differenced series
+plot(costs_log_diff_seasonal, main="Seasonally Differenced Total Costs Time Series")
+
+```
+
+### VRES of Control Energy
+
+### 1. Visualization of VRES Control Energy
+
+```{r, plot ts of vres percent, echo = FALSE, warning = F}
+
+# Create the plot for VRES_percent with a linear trend line
+ggplot(d.h %>%
+         filter(as.Date(Timestamp) <= as.Date("2020-08-31")), 
+       aes(x = as.Date(Timestamp), y = VRES_percent)) +
+  geom_line(color = "darkgreen") +                     # Line plot of VRES_percent
+  geom_smooth(method = "lm", color = "black", se = FALSE) +  # Add linear trend line
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y") +
+  labs(title = "VRES Percentage Over Time",
+       x = NULL, 
+       y = "VRES Percent")
+```
+
+### 2. Decomposition and Stationarity of VRES Control Energy
+
+```{r, vres ts prep, include = FALSE, warning = F}
+# Convert the Timestamp column to a Date-Time object
+d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
+
+# Replace NAs in 'VRES_percent' with zero
+d.h$VRES_percent[is.na(d.h$VRES_percent)] <- 0
+
+# Convert VRES_percent into a time series object
+VRES_ts <- ts(d.h$VRES_percent, start = c(2015, 1), end = c(2020, 8), frequency=24*365.25)
+```
 
 ```{r, vres additive decomposition, echo = FALSE, warning = F}
 
@@ -560,12 +619,73 @@ VRES_log <- log(VRES_ts + 1e-6)
 # Decompose the log-transformed time series
 VRES_log_decomposed <- decompose(VRES_log)
 plot(VRES_log_decomposed)
+
+# Apply first-order differencing to the log-transformed series
+VRES_log_diff <- diff(VRES_log)
+
+# Plot the differenced series
+plot(VRES_log_diff, main="Differenced Log-Transformed VRES Time Series")
+
+# Apply seasonal differencing
+VRES_log_seasonal_diff <- diff(VRES_log_diff, lag = 365)
+sum(is.na(VRES_log_seasonal_diff))
+
+# Plot the seasonally differenced log-transformed series
+plot(VRES_log_seasonal_diff, main="Seasonally Differenced Log-Transformed VRES Time Series")
+
 ```
 
-```{r, vres adf2, echo = FALSE, warning = F}
+```{r, vres sarima, echo = FALSE, warning = F}
 
-# Perform Augmented Dickey-Fuller test
-adf.test(VRES_log)
+# Fit a SARIMA model using auto.arima
+#sarima_model_h <- auto.arima(VRES_ts, seasonal = TRUE)
+
+# Summary of the SARIMA model
+#summary(sarima_model_h)
+
+# Check residuals of the SARIMA model
+#checkresiduals(sarima_model_h)
+
+```
+
+```{r, vres forecasting, echo = FALSE, warning = F}
+# Forecast the next 365 periods (adjust as needed)
+#sarima_forecast_h <- forecast(sarima_model_h, h = 365)
+
+# Plot the forecast
+#plot(sarima_forecast_h)
+
+```
+
+
+### 4. Vector Autoregression of VRES Impact on Total Control Costs
+
+```{r, stationarity for var, echo = FALSE, warning = F}
+
+adf.test(costs_log_diff_seasonal)
+adf.test(VRES_log_seasonal_diff)
+```
+
+Determine the optimal lag length
+
+```{r, lag length var, echo = FALSE, warning = F}
+sum(is.na(costs_log_diff_seasonal))  # Check for NAs in costs_log_diff
+sum(is.na(VRES_log_seasonal_diff))  # Check for NAs in VRES_log_seasonal_diff
+
+VARselect(cbind(costs_log_diff_seasonal, VRES_log_seasonal_diff), lag.max = 10, type = "const")
+
+```
+
+```{r, var model, echo = FALSE, warning = F}
+var_model <- VAR(cbind(costs_log_diff_seasonal, VRES_log_seasonal_diff), 
+                 p = 10, type = "const")
+summary(var_model)
+
+```
+
+```{r, granger, echo = FALSE, warning = F}
+causality(var_model, cause = "VRES_log_seasonal_diff")
+
 ```
 
 ## Time Series of Daily Benchmark Data
@@ -683,27 +803,27 @@ plot(seasonal_diff_log_vres_ts_d, main="Seasonally Differenced Log-Transformed V
 The log-transformation and seasonal differencing have not sufficiently stabilized the variance, this indicates that the series may still exhibit heteroscedasticity (i.e., non-constant variance) which is why we consider a GARCH model.
 
 ```{r warning=FALSE, vres garch, echo=FALSE}
-
-# Specify the model for the mean
-spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
-                   mean.model = list(armaOrder = c(1, 1)),
-                   distribution.model = "norm")
-
-# Fit the GARCH model to the log-differenced series
-fit_garch <- ugarchfit(spec = spec, data = seasonal_diff_log_vres_ts_d)
-
-# Summary of the fitted GARCH model
-summary(fit_garch)
-
-# Plot the fitted volatility
-plot(fit_garch, which = 2)  # This will show the conditional variance (volatility)
-
-# Forecast using the fitted GARCH model
-garch_forecast <- ugarchforecast(fit_garch, n.ahead = 365)
-
-# Plot the forecasted volatility
-plot(garch_forecast, which = 1)  # Forecasted series
-plot(garch_forecast, which = 3)  # Forecasted conditional variance
+# 
+# # Specify the model for the mean
+# spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
+#                    mean.model = list(armaOrder = c(1, 1)),
+#                    distribution.model = "norm")
+# 
+# # Fit the GARCH model to the log-differenced series
+# fit_garch <- ugarchfit(spec = spec, data = seasonal_diff_log_vres_ts_d)
+# 
+# # Summary of the fitted GARCH model
+# summary(fit_garch)
+# 
+# # Plot the fitted volatility
+# plot(fit_garch, which = 2)  # This will show the conditional variance (volatility)
+# 
+# # Forecast using the fitted GARCH model
+# garch_forecast <- ugarchforecast(fit_garch, n.ahead = 365)
+# 
+# # Plot the forecasted volatility
+# plot(garch_forecast, which = 1)  # Forecasted series
+# plot(garch_forecast, which = 3)  # Forecasted conditional variance
 
 ```
 
