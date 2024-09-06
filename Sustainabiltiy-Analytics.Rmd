@@ -407,7 +407,8 @@ ggplot(d.h_upto2020)+
 
 The above graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. The graph exhibits a cyclical wave pattern, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
 
-Toward the end of the graph, there's a noticeable spike or "bump," where the VRES_percent doubles the usual peak levels observed earlier. However, even with this significant increase, the maximum VRES_percent only reaches 0.27% of the total energy demand. This suggests that despite the seasonal variations and occasional spikes, the contribution of renewable energy remains relatively small in the overall energy mix
+the maximum recorded percentage was 27% when we look at the moving average, where each dot represents the average contribiution over a 24 hour period, this share is lovered signifficantly, hardly reaching a contribution of 10% to the daily production. 
+
 
 ```{r, Cost of Secondary Control Energy, include = TRUE}
 
@@ -455,7 +456,7 @@ ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cos
   # Use the correct order of colors and labels according to the levels of cost_type
   scale_fill_manual(values = c("skyblue2", "lightblue1", "gold", "yellow"), 
                     breaks = c("cost_pos_sec_EUR", "cost_neg_sec_EUR", "cost_pos_ter_EUR", "cost_neg_ter_EUR"),
-                    labels = c("Pos. Sec.", "Neg. Sec.", "Pos. Ter.", "Neg. Ter.")) +  # Custom colors and labels
+                    labels = c("+ Sec.", "- Sec.", "+ Ter.", "- Ter.")) +  # Custom colors and labels
 
   theme_minimal() +
   theme(legend.title = element_blank())  # Hide the legend title
