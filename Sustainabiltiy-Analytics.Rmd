@@ -15,18 +15,15 @@ notes: footnotes
 library(readxl) #install packages first if not done so already
 library(readr)
 library(tidyr)
-library(dplyr)
 library(tidyr)
 library(lubridate)
 library(ggplot2)
 library(forecast)
 library(tseries)
 library(rugarch)
-<<<<<<< HEAD
 library(vars)
-=======
 library(scales)
->>>>>>> 6020002b4123e95eebb8a0b6a354267281d5506d
+library(dplyr)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -484,8 +481,7 @@ ggplot(d, aes(x = CH_solar_generation_actual)) +
 
 \<\<<descriptions and interpretations to be added later>\>\>
 
-<<<<<<< HEAD
-### Total Cost of Control Energy
+\<\<\<\<\<\<\< HEAD \### Total Cost of Control Energy
 
 ### 1. Visualization of Control Costs
 
@@ -499,7 +495,6 @@ d$VRES_percent[is.na(d$VRES_percent)] <- 0
 # Convert VRES_percent into a time series object
 VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
 ```
-
 
 ```{r, plot ts of vres percent, echo = FALSE, warning = F}
 
@@ -652,7 +647,6 @@ plot(VRES_log_seasonal_diff, main="Seasonally Differenced Log-Transformed VRES T
 #plot(sarima_forecast_h)
 
 ```
-
 
 ### 4. Vector Autoregression of VRES Impact on Total Control Costs
 
