@@ -15,7 +15,7 @@ notes: footnotes
 library(readxl) #install packages first if not done so already
 library(readr)
 library(tidyr)
-library(tidyr)
+library(tidyquant)
 library(lubridate)
 library(ggplot2)
 library(forecast)
@@ -352,9 +352,6 @@ ggplot(d.h_upto2020) +
   scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
   theme_minimal() +
   labs(color = "Generation Type")
-
-install.packages("tidyquant")
-library(tidyquant)
 
 
 #Moving Average
