@@ -336,47 +336,44 @@ Access: <https://data.open-power-system-data.org/time_series>
 VRES don't account for a lot of Energy
 
 ```{r Wind and Solar, include = TRUE, echo = FALSE}
-
 # Filter the dataset to include only data up to the year 2020 (As for those Data only till 2020 are available)
 d.h_upto2020 <- d.h %>%
   filter(Timestamp <= as.Date("2020-12-31"))  
-
-
-
-# Plot for Wind Onshore Generation
-ggplot(d.h_upto2020, aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW)) + 
-  geom_line(color = "blue", size = 1) + 
-  ggtitle("Wind Onshore Generation Over Time (Up to 2020)") +
-  xlab("Time") +
-  ylab("Wind Onshore Generation (MW)") +
-  theme_minimal()
-
-
-# Plot for Solar Generation
-ggplot(d.h_upto2020, aes(x = Timestamp, y = CH_solar_generation_actual_MW)) + 
-  geom_line(color = "orange", size = 1) + 
-  ggtitle("Solar Generation Over Time (Up to 2020)") +
-  xlab("Time") +
-  ylab("Solar Generation (MW)") +
-  theme_minimal()
-
-
 
 # Plot the filtered data with wind in the foreground and solar in the background
 ggplot(d.h_upto2020) + 
   # Solar generation in the background
   geom_line(aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) + 
   # Wind generation in the foreground
-  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind Onshore"), size = 1) + 
-  ggtitle("Wind and Solar Generation Over Time (Up to 2020)") +
+  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), size = 1) + 
+  ggtitle("Wind and Solar Generation over Time") +
   xlab("Time") +
   ylab("Generation (MW)") +
-  scale_color_manual(values = c("Wind Onshore" = "blue", "Solar" = "orange")) + 
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  labs(color = "Generation Type")
+
+install.packages("tidyquant")
+library(tidyquant)
+
+
+#Moving Average
+# Plot the filtered data with wind in the foreground and solar in the background
+ggplot(d.h_upto2020) + 
+  # Solar generation in the background
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) +
+
+# Wind generation in the foreground
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), size = 1) + 
+  ggtitle("Wind and Solar Generation Moving Average over Time") +
+  xlab("Time") +
+  ylab("Generation (MW)") +
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
   theme_minimal() +
   labs(color = "Generation Type")
 
 
-
+  
 ```
 
 ```{r VRES, include = TRUE, echo = FALSE}
@@ -393,14 +390,22 @@ max_VRES
 
 
 # Plot the filtered data
-ggplot(d.h_upto2020, aes(x = Timestamp, y = VRES_percent)) + 
+ggplot(d.h_upto2020, aes(x = Timestamp, y = VRES_percent * 100)) + 
   geom_line(color = "blue") + 
-  ggtitle("VRES_percent Over Time (Up to 2020)") +
+  ggtitle("VRES Percent over Time") +
   xlab("Time") +
-  ylab("VRES_percent (%)") +
+  ylab("VRES percent [%]") +
+  scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
   theme_minimal()
 
- 
+# Moving Average
+ggplot(d.h_upto2020)+ 
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = VRES_percent* 100)) + 
+  ggtitle("VRES_percent Over Time (Up to 2020)") +
+  xlab("Time") +
+  ylab("VRES percent [%]") +
+  scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
+  theme_minimal()
 ```
 
 The above graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. The graph exhibits a cyclical wave pattern, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
