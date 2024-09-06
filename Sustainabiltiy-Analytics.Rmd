@@ -488,10 +488,6 @@ ggplot(d, aes(x = CH_solar_generation_actual)) +
 ### Total Cost of Control Energy
 
 ### 1. Visualization of Control Costs
-=======
-### VRES
-
-### Visualization
 
 ```{r, vres ts prep, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
@@ -503,7 +499,7 @@ d$VRES_percent[is.na(d$VRES_percent)] <- 0
 # Convert VRES_percent into a time series object
 VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
 ```
->>>>>>> 6020002b4123e95eebb8a0b6a354267281d5506d
+
 
 ```{r, plot ts of vres percent, echo = FALSE, warning = F}
 
@@ -579,7 +575,7 @@ ggplot(d.h %>%
        y = "VRES Percent")
 ```
 
-### 2. Decomposition and Stationarity of VRES Control Energy
+### 2. Decomposition of VRES Control Energy
 
 ```{r, vres ts prep, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
@@ -598,6 +594,8 @@ VRES_ts <- ts(d.h$VRES_percent, start = c(2015, 1), end = c(2020, 8), frequency=
 VRES_decomposed <- decompose(VRES_ts)
 plot(VRES_decomposed)
 ```
+
+### 3. Stationarity of VRES Control Energy
 
 ```{r, vres adf1, echo = FALSE, warning = F}
 
@@ -744,57 +742,66 @@ head(vres_decomp_d$random)
 
 The decomposition reveals a clear linear trend and strong seasonal patterns, with some variability in both the seasonal component and residuals. While the seasonal noise is expected due to the nature of renewable energy sources like photovoltaic and wind, it does not obscure the overall pattern. The fluctuations in the residuals suggest potential volatility of variance, but this can be addressed by examining the residuals further after modeling.
 
-#### 3. Stationarity and Differencing Daily VRES Production
+#### 3. Stationarity of Daily VRES Production
 
 First, we apply regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
 
 ```{r, differencing, echo = FALSE, warning = F}
-# Apply first-order differencing to make the series stationary
-diff_vres_ts_d <- diff(vres_ts_d)
+# Apply log transformation (add a small constant to avoid log(0) issues)
+vres_log_d <- log(vres_ts_d + 1e-6)
 
-# Apply seasonal differencing (assume seasonal frequency = 365 for daily data with yearly seasonality)
-seasonal_diff_vres_ts_d <- diff(diff_vres_ts_d, lag = 365)
+# Apply first-order differencing to the log-transformed series
+vres_log_diff_d <- diff(vres_log_d)
+
+# Apply seasonal differencing
+vres_log_seasonal_diff_d <- diff(vres_log_diff_d, lag = 365)
+sum(is.na(vres_log_seasonal_diff_d))
+
+plot(vres_log_seasonal_diff_d, main="Log-Transformed and Seasonally Differenced VRES Time Series", 
+     ylab = "Differenced GWh", 
+     xlab = NULL)
+
+```
+
+```{r, vres stationarity, echo = FALSE, warning = F}
+# Perform ADF test to check stationarity
+adf.test(vres_log_seasonal_diff_d)
 ```
 
 ```{r, plot differencing, echo = FALSE, warning = F}
-# Set up the plot window to display two plots side by side
-par(mfrow = c(2, 1))
-
-# Plot the differenced series
-plot(diff_vres_ts_d, main="Differenced VRES Time Series", 
-     ylab = "Differenced GWh", 
-     xlab = NULL)
-
-# Plot the seasonally differenced series
-plot(seasonal_diff_vres_ts_d, main="Seasonally Differenced VRES Time Series", 
-     ylab = "Differenced GWh", 
-     xlab = NULL)
-
-# Reset to the default single plot layout
-par(mfrow = c(1, 1))
+# # Set up the plot window to display two plots side by side
+# par(mfrow = c(2, 1))
+# 
+# # Plot the differenced series
+# plot(diff_vres_ts_d, main="Differenced VRES Time Series", 
+#      ylab = "Differenced GWh", 
+#      xlab = NULL)
+# 
+# # Plot the seasonally differenced series
+# plot(seasonal_diff_vres_ts_d, main="Seasonally Differenced VRES Time Series", 
+#      ylab = "Differenced GWh", 
+#      xlab = NULL)
+# 
+# # Reset to the default single plot layout
+# par(mfrow = c(1, 1))
 ```
 
 The first plot (Differenced VRES Time Series) shows the series after first-order differencing. While the trend is largely removed, there still appears to be seasonal fluctuations in the data, suggesting that seasonal differencing may be necessary.The variance seems somewhat stable, but there is some volatility toward the latter half of the series.
 
 The second plot (Seasonally Differenced VRES Time Series) shows the data after applying both first-order and seasonal differencing. The seasonality appears to be removed successfully. The variance still shows some volatility, particularly in the later years, but the overall pattern is more stable than the first-differenced series.
 
-```{r, vres stationarity, echo = FALSE, warning = F}
-# Perform ADF test to check stationarity
-adf.test(seasonal_diff_vres_ts_d)
-```
-
 ```{r, log-differencing, echo = FALSE, warning = F}
-# Apply log transformation to the original VRES series
-log_vres_ts_d <- diff(vres_ts_d)
-
-# Apply differencing to the log-transformed series
-diff_log_vres_ts_d <- diff(log_vres_ts_d)
-seasonal_diff_log_vres_ts_d <- diff(diff_log_vres_ts_d, lag = 365)
-
-# Plot the seasonally differenced log-transformed series
-plot(seasonal_diff_log_vres_ts_d, main="Seasonally Differenced Log-Transformed VRES Time Series", 
-     ylab="Log-Differenced GWh", 
-     xlab = NULL)
+# # Apply log transformation to the original VRES series
+# log_vres_ts_d <- diff(vres_ts_d)
+# 
+# # Apply differencing to the log-transformed series
+# diff_log_vres_ts_d <- diff(log_vres_ts_d)
+# seasonal_diff_log_vres_ts_d <- diff(diff_log_vres_ts_d, lag = 365)
+# 
+# # Plot the seasonally differenced log-transformed series
+# plot(seasonal_diff_log_vres_ts_d, main="Seasonally Differenced Log-Transformed VRES Time Series", 
+#      ylab="Log-Differenced GWh", 
+#      xlab = NULL)
 
 ```
 
@@ -831,8 +838,8 @@ Let's resume with the ACF and PACF since the GARCH model does not yield the desi
 
 ```{r, acf pacf, echo = FALSE, warning = F}
 # ACF and PACF for the log-transformed differenced series
-acf(seasonal_diff_vres_ts_d)
-pacf(seasonal_diff_vres_ts_d)
+acf(vres_log_seasonal_diff_d)
+pacf(vres_log_seasonal_diff_d)
 ```
 
 ```{r, acf pacf, echo = FALSE, warning = F}
@@ -890,7 +897,7 @@ plot(decomp_baseload)
 
 ```
 
-#### 3. Stationarity and Differencing of Day-Ahead Prices
+#### 3. Stationarity of Day-Ahead Prices
 
 ```{r, differencing of day-ahead, echo = FALSE, warning = F}
 # Apply first-order differencing to remove the trend
@@ -905,6 +912,29 @@ seasonal_diff_baseload_ts <- diff(diff_baseload_ts, lag = 365)
 # Plot the seasonally differenced series
 plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Series")
 
+```
+
+```{r, differencing baseload, echo = FALSE, warning = F}
+# Apply log transformation (add a small constant to avoid log(0) issues)
+baseload_log_d <- log(baseload_ts + 1e-6)
+
+# Apply first-order differencing to the log-transformed series
+baseload_log_diff_d <- diff(baseload_log_d)
+
+# Apply seasonal differencing
+baseload_log_seasonal_diff_d <- diff(baseload_log_diff_d, lag = 365)
+sum(is.na(baseload_log_seasonal_diff_d))
+
+plot(baseload_log_seasonal_diff_d, 
+     main="Log-Transformed and Seasonally Differenced Baseload Time Series", 
+     ylab = "Differenced EUR", 
+     xlab = NULL)
+
+```
+
+```{r, vres stationarity, echo = FALSE, warning = F}
+# Perform ADF test to check stationarity
+adf.test(baseload_log_seasonal_diff_d)
 ```
 
 #### 4. Forecast of Day-Ahead Prices
