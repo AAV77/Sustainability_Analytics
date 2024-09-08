@@ -296,10 +296,11 @@ remove(combined_data, data_list, df, df_load, df_combined,
 ```
 
 
-```{r, Test d, warning = F, include= F}
+```{r, Test cost of 2020, warning = F, include= F}
 sums_2020 <- d.h %>%
     filter(year(Timestamp) == 2020) %>%
     summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
+# Comparison with report shows same numbers
 ```
 
 
