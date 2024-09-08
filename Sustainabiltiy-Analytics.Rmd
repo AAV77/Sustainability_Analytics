@@ -24,6 +24,8 @@ library(rugarch)
 library(vars)
 library(scales)
 library(dplyr)
+library(readr)
+library(stringr)
 
 setwd(dirname(rstudioapi::getSourceEditorContext()$path)) #setting directory
 ```
@@ -54,7 +56,9 @@ for (s in sheets_after_2015) {
   
   # Convert the timestamp column
   df[[1]] <- as.numeric(df[[1]])
-  df$Timestamp <- as.POSIXct(df[[1]] * 86400, origin = "1899-12-29 23:00:00", tz = "Europe/Zurich")
+  df$Timestamp <- as.POSIXct(df[[1]] * 86400,
+                             origin = "1899-12-29 23:00:00",
+                             tz = "Europe/Zurich")
   
   # Store the data frame in the list
   data_list[[s]] <- df %>% select(-1)
@@ -67,7 +71,9 @@ for (s in sheets_after_2021) {
   df <- df %>% select (1, 7,8,9,10, 22:25) 
   
   # Convert the timestamp column
-  df$Timestamp <- as.POSIXct(df[[1]], format = "%d.%m.%Y %H:%M", tz = "Europe/Zurich")
+  df$Timestamp <- as.POSIXct(df[[1]],
+                             format = "%d.%m.%Y %H:%M",
+                             tz = "Europe/Zurich")
   
   #remove first column
   df <- df %>% select(-1)
@@ -115,17 +121,11 @@ combined_data <- combined_data %>%
   select(9, everything())  #rearranging
 ```
 
-```{r, Test combined data 2021 with report, warning = F, include= F}
-sums_2021 <- combined_data %>%
-    filter(year(Timestamp) == 2021) %>%
-    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
-```
 
 ```{r, manipulations 2, warning = F, include= F, cache= T}
 hourly_summary <- combined_data %>%
-  mutate(hour = floor_date(Timestamp, "hour")) %>%  # Create a new column 'hour' 
-                                                    # by rounding down to the 
-                                                    # nearest hour
+  # create a column 'hour' by rounding down to the nearest hour
+  mutate(hour = floor_date(Timestamp, "hour")) %>%  
   group_by(hour) %>%  # Group by the new 'hour' column
   summarise(
     # Sum the energy amount columns
@@ -152,71 +152,156 @@ hourly_summary <- combined_data %>%
   )
 ```
 
-```{r, Test hourly summary, warning = F, include= F}
-sums_2020 <- hourly_summary %>%
-    filter(year(Timestamp) == 2020) %>%
-    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
-```
 
-```{r, importing renwable share, include = F , warning = F, include= F}
-ren_gen <- read.csv("Generation_CH_2015-20.csv",header = T)
-ren_gen <- ren_gen %>% select(-1) %>%   
-  mutate(
-    Timestamp= ymd_hms(cet_cest_timestamp, tz = "Europe/Zurich")) %>%   
-  mutate(
-    VRES_percent = (CH_solar_generation_actual+CH_wind_onshore_generation_actual)/CH_load_actual_entsoe_transparency)
-#importing data and looking at the percentage of VRES generated hourly
+```{r, importing renwable share and grid load, include = F , warning = F, include= F}
+# Importing the generation data per production type
+gen_per_type_list <- c("Actual Generation per Production Type_201501010000-201601010000.csv",
+                       "Actual Generation per Production Type_201601010000-201701010000.csv",
+                       "Actual Generation per Production Type_201701010000-201801010000.csv",
+                       "Actual Generation per Production Type_201801010000-201901010000.csv",
+                       "Actual Generation per Production Type_201901010000-202001010000.csv",
+                       "Actual Generation per Production Type_202001010000-202101010000.CSV",
+                       "Actual Generation per Production Type_202101010000-202201010000.csv",
+                       "Actual Generation per Production Type_202201010000-202301010000.csv",
+                       "Actual Generation per Production Type_202301010000-202401010000.csv",
+                       "Actual Generation per Production Type_202401010000-202501010000.csv")
 
+# Initialize an empty dataframe to store the combined data
+df_combined_type <- tibble()
+
+# Loop through the different csv
+for (s in gen_per_type_list) {
+  # Read the csv
+  df_gen_per_type <- read_csv(s, na = c("N/A", "", "n/e", "-"))
+  
+  # Combine the dataframes
+  df_combined_type <- bind_rows(df_combined_type, df_gen_per_type)
+  }
+
+# Importing the grid load data
+grid_load_list <- c("Total Load - Day Ahead _ Actual_201501010000-201601010000.csv",
+                    "Total Load - Day Ahead _ Actual_201601010000-201701010000.csv",
+                    "Total Load - Day Ahead _ Actual_201701010000-201801010000.csv",
+                    "Total Load - Day Ahead _ Actual_201801010000-201901010000.csv",
+                    "Total Load - Day Ahead _ Actual_201901010000-202001010000.csv",
+                    "Total Load - Day Ahead _ Actual_202001010000-202101010000.csv",
+                    "Total Load - Day Ahead _ Actual_202101010000-202201010000.csv",
+                    "Total Load - Day Ahead _ Actual_202201010000-202301010000.csv",
+                    "Total Load - Day Ahead _ Actual_202301010000-202401010000.csv",
+                    "Total Load - Day Ahead _ Actual_202401010000-202501010000.csv")
+
+# Initialize an empty dataframe to store the combined data
+df_combined_load <- tibble()
+
+# Loop through the different csv
+for (s in grid_load_list) {
+  # Read the csv
+  df_load <- read_csv(s, na = c("N/A", "", "n/e", "-"))
+  
+  # Combine the dataframes
+  df_combined_load <- bind_rows(df_combined_load, df_load)
+  }
+
+
+# Create timestamps for the dataframe (per type)
+df_combined_type <- df_combined_type %>%
+  mutate(
+    # Extract the starting date-time part of the MTU column
+    StartTimestamp = sapply(str_split(MTU, " - "), `[`, 1),
+    Timestamp = suppressWarnings(
+      dmy_hm(StartTimestamp, tz = "Europe/Zurich"))
+    ) %>%
+  select(-StartTimestamp) %>% 
+  # Remove rows where Timestamp is NA (problem with daylight savings time)
+  filter(!is.na(Timestamp)) %>% 
+  # Remove duplicate rows (there are duplicate rows because of daylight savings 
+  # time (time from 02:00 to 03:00 happens twice) -> only keep the first row)
+  distinct(Timestamp, .keep_all = TRUE)
+
+
+# Create timestamps for the dataframe (load)
+df_combined_load <- df_combined_load %>%
+  mutate(
+    # Extract the starting date-time part of the MTU column
+    StartTimestamp = sapply(str_split(`Time (CET/CEST)`, " - "), `[`, 1),
+    Timestamp = suppressWarnings(
+      dmy_hm(StartTimestamp, tz = "Europe/Zurich"))
+    ) %>%
+  select(-StartTimestamp) %>% 
+  # Remove rows where Timestamp is NA (problem with daylight savings time)
+  filter(!is.na(Timestamp)) %>% 
+  # Remove duplicate rows (there are duplicate rows because of daylight savings 
+  # time (time from 02:00 to 03:00 happens twice) -> only keep the first row)
+  distinct(Timestamp, .keep_all = TRUE)
+
+
+# Merging two combined dataframes on the timestamp
+df_gen_load <- full_join(df_combined_type, df_combined_load,
+               by = "Timestamp") 
+
+
+# Clean up combined df
+df_gen_load <- df_gen_load %>% 
+  # Remove columns where all values are NAs (Fossil - brown coal for example)
+  select(where(~ any(!is.na(.)))) %>% 
+  # Remove column are (CH)
+  # Remove columns conatining original time information and area
+  select(-c("Area", "MTU", "Time (CET/CEST)"))
+
+# Adding VRES (percentage Swiss (solar + wind) production / load on grid)
+df_gen_load <- df_gen_load %>%
+  mutate(VRES_percent = (`Solar  - Actual Aggregated [MW]` + `Wind Onshore  - Actual Aggregated [MW]`) / `Actual Total Load [MW] - BZN|CH`)
 ```
 
 ```{r, join, include= F, warning = F }
-d <- left_join(hourly_summary, ren_gen, by = "Timestamp") 
+df_combined <- left_join(hourly_summary, df_gen_load, by = "Timestamp") 
 # merging on the hour
-
 ```
 
-```{r, Test d, warning = F, include= F}
-sums_2020 <- d %>%
-    filter(year(Timestamp) == 2020) %>%
-    summarise(across(where(is.numeric), ~ sum(.x, na.rm = TRUE)))
-```
 
-```{r, adding total cost, include = F, warning = F  }
-d <- d %>% 
+```{r, adding total cost, include = F, warning = F}
+# Add total cost
+df_combined <- df_combined %>% 
   #calculating total cost by summing all costs
-  mutate(total_cost_EUR = cost_pos_sec+cost_neg_sec+cost_pos_ter+cost_neg_ter) %>% 
-  #removing NA rows for total cost and VRES %, mainly later half 2020
-  filter(!is.na(VRES_percent) | !is.na(total_cost_EUR)) %>% 
-  select(-cet_cest_timestamp) %>%  # removing duplicate row, comment out this command
-                                  # to show that the times are the same
-  select(Timestamp, VRES_percent, total_cost_EUR, everything())
-  
-# remove(combined_data, data_list, df, hourly_summary, ren_gen)
+  mutate(total_cost_EUR = 
+           cost_pos_sec+cost_neg_sec+cost_pos_ter+cost_neg_ter)
+
+# Save the lines with NA values in VRES or Total cost -> 57 lines / hours
+df_na_output <- df_combined %>% 
+  filter(is.na(VRES_percent) | is.na(total_cost_EUR))
+
+# Exclude the lines with NA values in VRES or Total cost
+df_combined <- df_combined %>% 
+  filter(!is.na(VRES_percent) & !is.na(total_cost_EUR)) 
+
+# Rearrange and rename rows in df_combined
+d.h <- df_combined %>% 
+  select(Timestamp, VRES_percent, total_cost_EUR,
+         total_load_MW = `Actual Total Load [MW] - BZN|CH`,
+         cost_pos_sec_EUR = cost_pos_sec, cost_neg_sec_EUR = cost_neg_sec,
+         cost_pos_ter_EUR = cost_pos_ter, cost_neg_ter_EUR = cost_neg_ter,
+         pos_sec_amount_kwh, neg_sec_amount_kwh,
+         pos_ter_amount_kwh, neg_ter_amount_kwh,
+         avg_price_pos_sec_EUR_MWh, avg_price_neg_sec_EUR_MWh,
+         avg_price_pos_ter_EUR_MWh, avg_price_neg_ter_EUR_MWh,
+         CH_solar_generation_actual_MW = `Solar  - Actual Aggregated [MW]`,
+         CH_wind_onshore_generation_actual_MW =
+           `Wind Onshore  - Actual Aggregated [MW]`,
+         everything())
+
 # removing clutter
+remove(combined_data, data_list, df, df_load, df_combined,
+       df_combined_load, df_combined_type, 
+       df_gen_load, df_gen_per_type, hourly_summary)
 ```
 
+
 ```{r, Test d, warning = F, include= F}
-sums_2020 <- d %>%
+sums_2020 <- d.h %>%
     filter(year(Timestamp) == 2020) %>%
     summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
 ```
 
-```{r, adding units where missing, include = F, warning = F}
-d.h <- d %>%
-  rename(
-    cost_pos_sec_EUR = cost_pos_sec, 
-    cost_neg_sec_EUR = cost_neg_sec,
-    cost_pos_ter_EUR = cost_pos_ter,
-    cost_neg_ter_EUR = cost_neg_ter,
-    CH_load_actual_entsoe_transparency_MW = CH_load_actual_entsoe_transparency,
-    CH_load_forecast_entsoe_transparency_MW = CH_load_forecast_entsoe_transparency,
-    CH_solar_capacity_MW = CH_solar_capacity,
-    CH_solar_generation_actual_MW = CH_solar_generation_actual,
-    CH_wind_onshore_capacity_MW = CH_wind_onshore_capacity,
-    CH_wind_onshore_generation_actual_MW = CH_wind_onshore_generation_actual,
-    ) 
-  
-```
 
 ```{r, add benchmark data, include = F, warning = F}
 # Load the datasets
@@ -267,19 +352,6 @@ head(d.d)
 remove(energy_production, energy_prices)
 ```
 
-```{r, Test d.h, warning = F, include= F}
-sums_2019 <- d.h %>%
-    filter(year(Timestamp) == 2019) %>%
-    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
-
-sums_2020 <- d.h %>%
-    filter(year(Timestamp) == 2020) %>%
-    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
-
-sums_2021 <- d.h %>%
-    filter(year(Timestamp) == 2021) %>%
-    summarise(across(where(is.numeric), ~ sum(.x, na.rm = FALSE)))
-```
 
 \newpage
 
