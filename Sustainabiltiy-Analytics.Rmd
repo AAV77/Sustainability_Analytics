@@ -404,32 +404,56 @@ Open Data on VRES Production in Europe, including Switzerland.
 
 Access: <https://data.open-power-system-data.org/time_series>
 
-# Exploratory Data Analysis (EDA)
+## Overview Variable Renewable Energy Sources 
 
-VRES don't account for a lot of Energy
 
 ```{r Wind and Solar, include = TRUE, echo = FALSE}
-# Filter the dataset to include only data up to the year 2020 (As for those Data only till 2020 are available)
-d.h_upto2020 <- d.h %>%
-  filter(Timestamp <= as.Date("2020-12-31"))  
 
-# Plot the filtered data with wind in the foreground and solar in the background
-ggplot(d.h_upto2020) + 
+# Plot the Daily Generation with wind in the foreground and solar in the background
+ggplot(d.d) + 
   # Solar generation in the background
-  geom_line(aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) + 
+  geom_line(aes(x = Date, y = Photovoltaic_GWh, color = "Solar"), size = 1) + 
   # Wind generation in the foreground
-  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), size = 1) + 
+  geom_line(aes(x = Date, y = Wind_GWh, color = "Wind"), size = 1) + 
   ggtitle("Wind and Solar Generation over Time") +
+  xlab("Date") +
+  ylab("Generation (GWh)") +
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  labs(color = "Generation Type")
+
+#Weekly Moving Average
+# Plot wind in the foreground and solar in the background
+ggplot(d.d) + # Solar generation in the background
+  geom_ma(ma_fun= SMA, n = 7, aes(x = Date, y = Photovoltaic_GWh, color = "Solar"), size = 1) +
+
+# Wind generation in the foreground
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Date, y = Wind_GWh, color = "Wind"), size = 1) + 
+  ggtitle("Wind and Solar Generation Moving Average over Time") +
   xlab("Time") +
   ylab("Generation (MW)") +
   scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
   theme_minimal() +
   labs(color = "Generation Type")
 
+###################
 
-#Moving Average
+# Plot the hourly data with wind in the foreground and solar in the background
+ggplot(d.h) + 
+  # Solar generation in the background
+  geom_line(aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) + 
+  # Wind generation in the foreground
+  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), size = 1) + 
+  ggtitle("Wind and Solar Generation over Time") +
+  xlab("Date") +
+  ylab("Generation (GWh)") +
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  labs(color = "Generation Type")
+
+# Daily Moving Average
 # Plot the filtered data with wind in the foreground and solar in the background
-ggplot(d.h_upto2020) + 
+ggplot(d.h) + 
   # Solar generation in the background
   geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) +
 
@@ -460,7 +484,7 @@ max_VRES
 
 
 # Plot the filtered data
-ggplot(d.h_upto2020, aes(x = Timestamp, y = VRES_percent * 100)) + 
+ggplot(d.h, aes(x = Timestamp, y = VRES_percent * 100)) + 
   geom_line(color = "blue") + 
   ggtitle("VRES Percent over Time") +
   xlab("Time") +
@@ -469,18 +493,18 @@ ggplot(d.h_upto2020, aes(x = Timestamp, y = VRES_percent * 100)) +
   theme_minimal()
 
 # Moving Average
-ggplot(d.h_upto2020)+ 
+ggplot(d.h)+ 
   geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = VRES_percent* 100)) + 
-  ggtitle("VRES_percent Over Time (Up to 2020)") +
+  ggtitle("VRES_percent Over Time") +
   xlab("Time") +
   ylab("VRES percent [%]") +
   scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
   theme_minimal()
 ```
 
-The above graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. The graph exhibits a cyclical wave pattern, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
+The above graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. A clearly cyclical wave pattern can be identified, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
 
-the maximum recorded percentage was 27% when we look at the moving average, where each dot represents the average contribiution over a 24 hour period, this share is lovered signifficantly, hardly reaching a contribution of 10% to the daily production. 
+the maximum value has been pushed up noticeably every year since 2020 and almost reached 60%. When looking at the moving average, where each dot represents the average contribution over a 24 hour period, this share is lowered significantly, still reaching a contribution of 20% to the daily production in the last recorded summer of 2024. 
 
 
 ```{r, Cost of Secondary Control Energy, include = TRUE}
@@ -523,7 +547,7 @@ ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cos
   geom_bar(stat = "identity", position = "dodge", color = "black") +  # Dodge to separate the bars
   ggtitle("Total Costs of Secondary and Tertiary Control Energy per Year in EUR") +
   xlab("Year") +
-  ylab("Total Cost (Million EUR)") +
+  ylab("Total Cost [EUR]") +
   scale_y_continuous(labels = label_number(suffix = " Mio", big.mark = ",")) +  # Format y-axis
 
   # Use the correct order of colors and labels according to the levels of cost_type
@@ -540,18 +564,8 @@ duplicate_rows
 
 ```
 
-The above plot visualizes the total yearly costs in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years.
+This plot visualizes the total yearly costs in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
 
-```{r Wind and Solar, include = TRUE, echo = FALSE}
-
-# Histogram for CH_solar_generation_actual
-ggplot(d, aes(x = CH_solar_generation_actual)) + 
-  geom_histogram(binwidth = 10, fill = "red", color = "black") +
-  scale_y_log10()
-  ggtitle("Histogram of CH_solar_generation_actual")
-
-
-```
 
 ## Time Series of Hourly Data (TO BE ADJUSTED)
 
