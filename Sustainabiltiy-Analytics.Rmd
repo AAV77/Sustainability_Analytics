@@ -567,26 +567,22 @@ duplicate_rows
 This plot visualizes the total yearly "costs" (gain in the case of negative values) in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
 
 
-## Time Series of Hourly Data (TO BE ADJUSTED)
-
-\<\<<descriptions and interpretations to be added later>\>\>
-
-\<\<\<\<\<\<\< HEAD \### Total Cost of Control Energy
+## Time Series of Hourly Data
 
 ### 1. Visualization of Control Costs
 
 ```{r, vres ts prep, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
-d$Timestamp <- as.POSIXct(d$Timestamp, format="%Y-%m-%d %H:%M:%S")
+d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
 
 # Replace NAs in 'VRES_percent' with zero
-d$VRES_percent[is.na(d$VRES_percent)] <- 0
+d.h$VRES_percent[is.na(d.h$VRES_percent)] <- 0
 
 # Convert VRES_percent into a time series object
-VRES_ts <- ts(d$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
+VRES_ts <- ts(d.h$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
 ```
 
-```{r, plot ts of vres percent, echo = FALSE, warning = F}
+```{r, plot ts of vres percent, echo = FALSE, warning = F, message = F}
 
 # Create the plot for VRES_percent with a linear trend line
 ggplot(d.h, aes(x = as.Date(Timestamp), y = total_cost_EUR)) +
@@ -597,6 +593,10 @@ ggplot(d.h, aes(x = as.Date(Timestamp), y = total_cost_EUR)) +
        x = NULL, 
        y = "Cost in EUR per kWh")
 ```
+
+The time series plot illustrates the cost of control energy over time, measured in EUR per kWh, from 2015 through 2024. The x-axis represents the time period, while the y-axis reflects the control energy costs in EUR. The graph reveals an overall increasing trend in control costs as time progresses, with periods of volatility that become more pronounced starting in early 2021. Although the costs were relatively stable from 2015 until 2020, with only minor spikes, a noticeable rise in both the frequency and magnitude of cost fluctuations is observed from 2021 onwards. This suggests that control energy costs became more volatile, with significant spikes emerging around 2022 and peaking in late 2023 and early 2024.
+
+One notable aspect of the data is the presence of multiple sharp peaks, indicating sudden surges in costs, which likely correspond to times of increased demand for control energy or variability in renewable energy generation. These peaks, reaching as high as EUR 7,500,000 per kWh, imply high operational costs during these periods. Additionally, there are moments where the costs drop to zero or even become negative. Negative costs could imply that Swissgrid occasionally earns money, likely through balancing mechanisms when energy supply exceeds demand, thus allowing the sale of excess energy. These patterns highlight the importance of understanding the underlying drivers, such as increased integration of variable renewable energy sources (VRES) into the grid, which may contribute to such fluctuations.
 
 ### 2. Decomposition of Control Costs
 
