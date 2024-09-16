@@ -552,8 +552,8 @@ ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cos
 
   # Use the correct order of colors and labels according to the levels of cost_type
   scale_fill_manual(values = c("skyblue2", "lightblue1", "gold", "yellow"), 
-                    breaks = c("cost_pos_sec_EUR", "cost_neg_sec_EUR", "cost_pos_ter_EUR", "cost_neg_ter_EUR"),
-                    labels = c("+ Sec.", "- Sec.", "+ Ter.", "- Ter.")) +  # Custom colors and labels
+  breaks = c("cost_pos_sec_EUR", "cost_neg_sec_EUR", "cost_pos_ter_EUR", "cost_neg_ter_EUR"),
+  labels = c("+ Sec.", "- Sec.", "+ Ter.", "- Ter.")) +  # Custom colors and labels
 
   theme_minimal() +
   theme(legend.title = element_blank())  # Hide the legend title
@@ -564,7 +564,7 @@ duplicate_rows
 
 ```
 
-This plot visualizes the total yearly costs in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
+This plot visualizes the total yearly "costs" (gain in the case of negative values) in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
 
 
 ## Time Series of Hourly Data (TO BE ADJUSTED)
