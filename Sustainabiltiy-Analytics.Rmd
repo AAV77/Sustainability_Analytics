@@ -594,9 +594,9 @@ ggplot(d.h, aes(x = as.Date(Timestamp), y = total_cost_EUR)) +
        y = "Cost in EUR per kWh")
 ```
 
-The time series plot illustrates the cost of control energy over time, measured in EUR per kWh, from 2015 through 2024. The x-axis represents the time period, while the y-axis reflects the control energy costs in EUR. The graph reveals an overall increasing trend in control costs as time progresses, with periods of volatility that become more pronounced starting in early 2021. Although the costs were relatively stable from 2015 until 2020, with only minor spikes, a noticeable rise in both the frequency and magnitude of cost fluctuations is observed from 2021 onwards. This suggests that control energy costs became more volatile, with significant spikes emerging around 2022 and peaking in late 2023 and early 2024.
+The first plot illustrates the cost of control energy over time, measured in EUR per kWh, from 2015 through 2024. The x-axis represents the time period, while the y-axis reflects the control energy costs in EUR. The graph reveals an overall increasing trend in control costs as time progresses, with periods of volatility that become more pronounced starting in late 2020. Although the costs were relatively stable from 2015 until 2020, with only minor spikes, a noticeable rise in both the frequency and magnitude of cost fluctuations is observed from 2021 onwards. This suggests that control energy costs became more volatile, with significant spikes emerging around 2022 and peaking in late 2023 and early 2024.
 
-One notable aspect of the data is the presence of multiple sharp peaks, indicating sudden surges in costs, which likely correspond to times of increased demand for control energy or variability in renewable energy generation. These peaks, reaching as high as EUR 7,500,000 per kWh, imply high operational costs during these periods. Additionally, there are moments where the costs drop to zero or even become negative. Negative costs could imply that Swissgrid occasionally earns money, likely through balancing mechanisms when energy supply exceeds demand, thus allowing the sale of excess energy. These patterns highlight the importance of understanding the underlying drivers, such as increased integration of variable renewable energy sources (VRES) into the grid, which may contribute to such fluctuations.
+One notable aspect of the data is the presence of multiple sharp peaks, indicating sudden surges in costs, which likely correspond to times of increased demand for control energy or variability in renewable energy generation. These peaks, reaching prices beyond EUR 7.5 million per kWh, imply high operational costs during these periods. Additionally, there are moments where the costs drop to zero or even become negative. Negative costs could imply that Swissgrid occasionally earns money, likely through balancing mechanisms when energy supply exceeds demand, thus allowing the sale of excess energy to other countries.
 
 ### 2. Decomposition of Control Costs
 
@@ -608,7 +608,7 @@ d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
 d.h$total_cost_EUR[is.na(d.h$total_cost_EUR)] <- 0
 
 # Convert total_cost_EUR into a time series object
-total_cost_EUR_ts <- ts(d.h$total_cost_EUR, start = c(2015, 1), end = c(2020, 8), frequency=24*365.25)
+total_cost_EUR_ts <- ts(d.h$total_cost_EUR, start = c(2015, 1), end = c(2024, 8), frequency=24*365.25)
 ```
 
 ```{r, costs additive decomposition, echo = FALSE, warning = F}
@@ -617,6 +617,10 @@ total_cost_EUR_ts <- ts(d.h$total_cost_EUR, start = c(2015, 1), end = c(2020, 8)
 cost_decomposed <- decompose(total_cost_EUR_ts)
 plot(cost_decomposed)
 ```
+
+The  decomposition into trend, seasonal, and remainder components provides insights into the underlying structure of the control cost data. The trend component reveals an upward trajectory starting in late 2020, peaking in mid-2023, and slightly declining towards the end of the observation period. This indicates that control costs were steadily increasing over time. The seasonal component exhibits recurring peaks and troughs, which suggests the presence of consistent, cyclical patterns in the control costs. These seasonal fluctuations could be linked to predictable changes in energy demand or production patterns, such as variations in solar and wind power generation.
+
+The remainder (random) component still displays a substantial amount of unexplained variance, especially towards the later years of the time series. There is notable volatility in this component, which could be attributed to external factors or events not captured by the trend or seasonality, such as sudden shifts in energy market conditions or unexpected changes in demand. Given this, while the decomposition successfully highlights the importance of the trend and seasonal components, the remainder indicates a significant level of residual variability that could require further exploration.
 
 ### 3. Stationarity of Control Costs
 
