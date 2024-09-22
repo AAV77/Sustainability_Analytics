@@ -694,14 +694,22 @@ d.h$VRES_percent[is.na(d.h$VRES_percent)] <- 0
 VRES_ts <- ts(d.h$VRES_percent, start = c(2015, 1), end = c(2024, 8), frequency=24*365.25)
 ```
 
-```{r, vres additive decomposition, echo = FALSE, warning = F}
+The below plot shows the decomposition of the VRES time series. The observed panel shows seasonal peaks occurring annually, reflecting the cyclical nature of renewable energy generation. The trend component shows a relatively flat trajectory until 2019, after which there is a noticeable upward shift, indicating a substantial increase in VRES share from 2020 onwards. While this upward trend aligns with the growing share of renewable energy sources in the grid, especially solar and wind energy, it is unclear to us at this point whether this sharp increase is due to the heavy ramp-up of VRES or other factors contributing to the surge, such as different calculation methods.
+
+```{r, vres additive decomposition, echo = FALSE, warning = FALSE}
 
 # Decompose the time series
 VRES_decomposed <- decompose(VRES_ts)
 plot(VRES_decomposed)
 ```
 
+The seasonal component exhibits a clear and consistent annual pattern, with large, predictable peaks occurring each year. These peaks are indicative of the regular variation in renewable energy production, likely driven by seasonal factors such as weather patterns, which affect solar radiation and wind speeds. The random component shows some variations, indicating that there may be structures int he data that is not captured by the trend and seasonal components. In fact, the random component does show increased variability in the later years, which may correspond to irregularities or external shocks affecting renewable generation.
+
+Given the observed trend and seasonality, the analysis of VRES' impact on control costs will focus on the data up to the end of 2021, thereby excluding the post-2021 period where external factors (such as the war in Ukraine) may have contributed to increased volatility.
+
 ### 3.6. Stationarity of VRES Control Energy
+
+We are now turning to the stationarity analysis, which will prepare the data for use in a vector autoregression (VAR) model and Granger cusality test aimed at forecasting control costs using VRES as a key predictor.
 
 ```{r, vres adf1, echo = FALSE, warning = F}
 
@@ -709,9 +717,9 @@ plot(VRES_decomposed)
 adf.test(VRES_ts)
 ```
 
-The Augmented Dickey-Fuller test of the VRES time series has a p-value of 0.01 although the decomposition clearly shows a trend, seasonality and also a change in randomness. We suspect a decomposition of a multiplicative time series might help. A multiplicative decomposition assumes that the components (trend, seasonality, and noise) interact in a multiplicative manner. This is often suitable when the variability of the series increases as the level of the series increases, which might be indicated by the trend and seasonal patterns scaling with the overall level.
+The Augmented Dickey-Fuller test of the VRES time series has a p-value of 0.01 although the decomposition clearly shows a trend, seasonality and also a change in randomness. We suspect a decomposition of a multiplicative time series might help. A multiplicative decomposition assumes that the components (trend, seasonality, and noise) interact in a multiplicative manner. This is often suitable when the variability of the time series increases as the level of the series increases, which might be indicated by the trend and seasonal patterns with the overall level.
 
-Applying a log transformation to the data can stabilize the variance, which often makes the series more appropriate to decomposition or modeling. The log transformation essentially converts a multiplicative relationship into an additive one.
+Applying a log transformation to the data can stabilize the variance, which often makes the series more appropriate to decomposition or modeling. The log-transformation essentially converts a multiplicative relationship into an additive one.
 
 ```{r, vres multiplicative decomposition, echo = FALSE, warning = F}
 
@@ -722,11 +730,16 @@ VRES_log <- log(VRES_ts + 1e-6)
 VRES_log_decomposed <- decompose(VRES_log)
 plot(VRES_log_decomposed)
 
+```
+
+The decomposition of the log-transformed series still reveals a clear upward trend and significant seasonality, indicating that the series is not yet stationary despite an initial low p-value from the Augmented Dickey-Fuller test. This suggests that, while the variance was stabilized, the time series still contains structural components (trend and seasonal patterns) that need to be addressed. Therefore, the next steps involve applying first-order differencing to remove the underlying trend and seasonal differencing to eliminate cyclical variations. These transformations will help ensure the series is stationary.
+
+```{r, vres stationarity, echo = FALSE, warning = F}
 # Apply first-order differencing to the log-transformed series
 VRES_log_diff <- diff(VRES_log)
 
 # Plot the differenced series
-plot(VRES_log_diff, main="Differenced Log-Transformed VRES Time Series")
+# plot(VRES_log_diff, main="Differenced Log-Transformed VRES Time Series")
 
 # Apply seasonal differencing
 VRES_log_seasonal_diff <- diff(VRES_log_diff, lag = 365)
@@ -735,9 +748,18 @@ sum(is.na(VRES_log_seasonal_diff))
 # Plot the seasonally differenced log-transformed series
 plot(VRES_log_seasonal_diff, main="Seasonally Differenced Log-Transformed VRES Time Series")
 
+VRES_log_seasonal_diff_decomp <- decompose(VRES_log_seasonal_diff)
+plot(VRES_log_seasonal_diff_decomp)
 ```
 
-```{r, vres sarima, echo = FALSE, warning = F}
+The resulting seasonally differenced, log-transformed series exhibits fluctuations around a constant mean with stable variance, as shown in the "Seasonally Differenced Log-Transformed VRES Time Series" plot. The decomposition of the differenced series confirms the absence of any significant remaining trend or seasonal patterns, with most variation captured in the random component. To verify stationarity, an Augmented Dickey-Fuller test was conducted, yielding a test statistic of -65.948 and a p-value smaller than 0.01. This result also rejects the null hypothesis of non-stationarity, indicating that the series is now stationary. The series is now ready for further analysis, such as Vector Autoregression (VAR), to assess its relationship with control costs.
+
+```{r, stationarity vres, echo = FALSE, warning = TRUE}
+
+adf.test(VRES_log_seasonal_diff)
+```
+
+```{r, vres sarima, include = FALSE, echo = FALSE, warning = F}
 
 # Fit a SARIMA model using auto.arima
 #sarima_model_h <- auto.arima(VRES_ts, seasonal = TRUE)
@@ -750,7 +772,7 @@ plot(VRES_log_seasonal_diff, main="Seasonally Differenced Log-Transformed VRES T
 
 ```
 
-```{r, vres forecasting, echo = FALSE, warning = F}
+```{r, vres forecasting, include = FALSE, echo = FALSE, warning = F}
 # Forecast the next 365 periods (adjust as needed)
 #sarima_forecast_h <- forecast(sarima_model_h, h = 365)
 
@@ -759,35 +781,61 @@ plot(VRES_log_seasonal_diff, main="Seasonally Differenced Log-Transformed VRES T
 
 ```
 
-### 3.7. Vector Autoregression of VRES Impact on Total Control Costs
+### 3.7. Vector Autoregression (VAR) of VRES Impact on Total Control Costs
 
-```{r, stationarity for var, echo = FALSE, warning = F}
+The next step in the analysis is to apply a Vector Autoregression (VAR) model to assess the linear interdependencies between time series. In this case, the VAR model will be used to analyze the dynamic relationship between VRES and control costs. By incorporating both the stationary VRES and control cost time series, the VAR model will help identify how changes in VRES affect control costs over time while accounting for the lagged effects of each variable on the other. We hope to provide insights into the impact of renewable energy integration on the grid's operational costs. We start by determining the optimal lag length.
 
-adf.test(costs_log_diff_seasonal)
-adf.test(VRES_log_seasonal_diff)
+```{r, align length time series, echo = FALSE, warning = FALSE}
+# Reflect period until end of 2021
+VRES_ts <- ts(d.h$VRES_percent, start = c(2015, 1), end = c(2021, 12), frequency=24*365.25)
+
+# Apply log transformation (add a small constant to avoid log(0) issues)
+VRES_log <- log(VRES_ts + 1e-6)
+
+# Apply first-order differencing to the log-transformed series
+VRES_log_diff <- diff(VRES_log)
+
+# Apply seasonal differencing
+VRES_log_seasonal_diff <- diff(VRES_log_diff, lag = 365)
+
+# Check length
+length(costs_log_diff_seasonal)
+length(VRES_log_seasonal_diff)
 ```
 
-Determine the optimal lag length
-
-```{r, lag length var, echo = FALSE, warning = F}
+```{r, lag length var, echo = TRUE, warning = F}
+# Check for NAs
 sum(is.na(costs_log_diff_seasonal))  # Check for NAs in costs_log_diff
 sum(is.na(VRES_log_seasonal_diff))  # Check for NAs in VRES_log_seasonal_diff
 
+# Determine lag length
 VARselect(cbind(costs_log_diff_seasonal, VRES_log_seasonal_diff), lag.max = 10, type = "const")
-
 ```
 
-```{r, var model, echo = FALSE, warning = F}
+The lag length selection process indicates that the optimal lag length is 10 according to all criteria (AIC, HQ, SC, and FPE). This suggests that incorporating 10 lags will provide the best model fit while capturing the dynamics between the differenced control costs and VRES time series. With this optimal lag length determined, the next step is to estimate the VAR model and analyze the interactions between the variables.
+
+```{r, var model, echo = TRUE, warning = FALSE}
 var_model <- VAR(cbind(costs_log_diff_seasonal, VRES_log_seasonal_diff), 
                  p = 10, type = "const")
 summary(var_model)
 
 ```
 
-```{r, granger, echo = FALSE, warning = F}
+The results of the VAR model estimation provide valuable insights into the dynamic relationship between control costs and VRES. For the equation predicting control costs (costs_log_diff_seasonal), several lags of the VRES variable are significant. Specifically, VRES at lags 1, 4, 6, 7, and 10 have significant coefficients, indicating that changes in VRES have both immediate and delayed effects on control costs. For instance, the negative coefficient for the first lag of VRES (-0.0139, p = 0.004) suggests that an increase in VRES has a small but statistically significant immediate downward impact on control costs. Conversely, the positive coefficients at lags 4, 5, and 6 indicate that VRES fluctuations at earlier periods can lead to a subsequent rise in control costs. Overall, the F-statistic for this equation (978.4, p < 2.2e-16) and adjusted R-squared of 0.2723 suggest that the model explains a moderate portion of the variability in control costs, with a strong relationship captured over the 10 lags.
+
+For the equation predicting VRES (VRES_log_seasonal_diff), most of the significant effects are driven by the variable's own lags, rather than control costs. VRES is highly influenced by its own history, with significant coefficients at many lags (1, 2, 3, 4, 5, and others), demonstrating the strong autocorrelation and persistence in renewable energy generation patterns. Control costs do not appear to significantly influence VRES, with only a few lags (such as lag 9 and 10) showing significant coefficients. The adjusted R-squared of 0.05423 for the VRES equation suggests that other factors, not captured in this model, likely explain the majority of the variation in VRES. The overall low correlation (0.001467) between the residuals of the two equations further confirms that VRES and control costs have a relatively low degree of direct correlation in the residual unexplained portions of the time series. Overall, the results imply that while VRES has a measurable impact on control costs, control costs have little reciprocal effect on VRES generation.
+
+### 3.8. Granger Causality Test of VRES Impact on Total Control Costs
+
+To further investigate the causal relationship between VRES  and control costs, a Granger causality test will be conducted. This test is designed to determine whether past values of one time series can help predict future values of another. Specifically, it will assess whether changes in VRES "Granger-cause" variations in control costs. By applying this test, we can determine if VRES has a predictive influence on control costs beyond their own historical patterns, solidifying the insights gained from the VAR model. This will provide a more in-depth understanding of the interactions between renewable energy penetration and grid operation costs.
+
+```{r, granger, echo = TRUE, warning = FALSE}
+# Perform Granger causality
 causality(var_model, cause = "VRES_log_seasonal_diff")
 
 ```
+
+The results of the Granger causality test provide strong evidence that VRES Granger-cause changes in control costs. The F-test statistic of 4.8896, with a very low p-value, allows us to confidently reject the null hypothesis that VRES does not Granger-cause control costs. This means that past values of VRES have predictive power over future variations in control costs, suggesting that fluctuations in renewable energy penetration directly influence the costs of maintaining grid stability. This reinforces the findings from the VAR model, where certain lags of VRES were found to have significant effects on control costs. However, the test for instantaneous causality between VRES and control costs yields a Chi-squared statistic of 0.11246 and a p-value of 0.7374, indicating no significant evidence of instantaneous causality between the two variables. In summary, VRES has a predictive, lagged impact on control costs, but the relationship is not instantaneous, highlighting the importance of considering the delayed effects of renewable energy integration on grid operation expenses.
 
 ## 4. Time Series of Daily Benchmark Data
 
