@@ -839,6 +839,8 @@ The results of the Granger causality test provide strong evidence that VRES Gran
 
 ## 4. Time Series of Daily Benchmark Data
 
+This chapter deals with the benchmark data of daily VRES production and day-ahead prices.
+
 ### 4.1. Visualization of Daily VRES and non-VRES Production
 
 ```{r, sun and wind visualization, echo = FALSE, warning = F}
@@ -895,9 +897,9 @@ The decomposition reveals a clear linear trend and strong seasonal patterns, wit
 
 ### 4.3. Stationarity of Daily VRES Production
 
-First, we apply regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
+As in previous steps, we apply a log-transformation as well as regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
 
-```{r, differencing, echo = FALSE, warning = F}
+```{r, differencing vres, echo = FALSE, warning = F}
 # Apply log transformation (add a small constant to avoid log(0) issues)
 vres_log_d <- log(vres_ts_d + 1e-6)
 
@@ -914,78 +916,22 @@ plot(vres_log_seasonal_diff_d, main="Log-Transformed and Seasonally Differenced 
 
 ```
 
-```{r, vres stationarity, echo = FALSE, warning = F}
+```{r, decomposition vres, echo = FALSE, warning = F}
+# Decomposition of fully differenced time series 
+vres_log_seasonal_diff_d_decomp <- decompose(vres_log_seasonal_diff_d)
+plot(vres_log_seasonal_diff_d_decomp)
+```
+
+```{r, vres stationarity, echo = TRUE, warning = TRUE}
 # Perform ADF test to check stationarity
 adf.test(vres_log_seasonal_diff_d)
 ```
 
-```{r, plot differencing, echo = FALSE, warning = F}
-# # Set up the plot window to display two plots side by side
-# par(mfrow = c(2, 1))
-# 
-# # Plot the differenced series
-# plot(diff_vres_ts_d, main="Differenced VRES Time Series", 
-#      ylab = "Differenced GWh", 
-#      xlab = NULL)
-# 
-# # Plot the seasonally differenced series
-# plot(seasonal_diff_vres_ts_d, main="Seasonally Differenced VRES Time Series", 
-#      ylab = "Differenced GWh", 
-#      xlab = NULL)
-# 
-# # Reset to the default single plot layout
-# par(mfrow = c(1, 1))
-```
-
-The first plot (Differenced VRES Time Series) shows the series after first-order differencing. While the trend is largely removed, there still appears to be seasonal fluctuations in the data, suggesting that seasonal differencing may be necessary.The variance seems somewhat stable, but there is some volatility toward the latter half of the series.
-
-The second plot (Seasonally Differenced VRES Time Series) shows the data after applying both first-order and seasonal differencing. The seasonality appears to be removed successfully. The variance still shows some volatility, particularly in the later years, but the overall pattern is more stable than the first-differenced series.
-
-```{r, log-differencing, echo = FALSE, warning = F}
-# # Apply log transformation to the original VRES series
-# log_vres_ts_d <- diff(vres_ts_d)
-# 
-# # Apply differencing to the log-transformed series
-# diff_log_vres_ts_d <- diff(log_vres_ts_d)
-# seasonal_diff_log_vres_ts_d <- diff(diff_log_vres_ts_d, lag = 365)
-# 
-# # Plot the seasonally differenced log-transformed series
-# plot(seasonal_diff_log_vres_ts_d, main="Seasonally Differenced Log-Transformed VRES Time Series", 
-#      ylab="Log-Differenced GWh", 
-#      xlab = NULL)
-
-```
-
-The log-transformation and seasonal differencing have not sufficiently stabilized the variance, this indicates that the series may still exhibit heteroscedasticity (i.e., non-constant variance) which is why we consider a GARCH model.
-
-```{r warning=FALSE, vres garch, echo=FALSE}
-# 
-# # Specify the model for the mean
-# spec <- ugarchspec(variance.model = list(model = "sGARCH", garchOrder = c(1, 1)),
-#                    mean.model = list(armaOrder = c(1, 1)),
-#                    distribution.model = "norm")
-# 
-# # Fit the GARCH model to the log-differenced series
-# fit_garch <- ugarchfit(spec = spec, data = seasonal_diff_log_vres_ts_d)
-# 
-# # Summary of the fitted GARCH model
-# summary(fit_garch)
-# 
-# # Plot the fitted volatility
-# plot(fit_garch, which = 2)  # This will show the conditional variance (volatility)
-# 
-# # Forecast using the fitted GARCH model
-# garch_forecast <- ugarchforecast(fit_garch, n.ahead = 365)
-# 
-# # Plot the forecasted volatility
-# plot(garch_forecast, which = 1)  # Forecasted series
-# plot(garch_forecast, which = 3)  # Forecasted conditional variance
-
-```
+The first plot presents the fully differenced series, which now fluctuates around a constant mean with reduced variance, indicating a more stable time series. The decomposition in the second plot confirms that both trend and seasonal components have been largely removed, leaving the random component as the main driver of variability. The results of the Augmented Dickey-Fuller (ADF) test confirm the stationarity of the differenced time series, with a Dickey-Fuller test statistic of -22.628 and a p-value smaller than 0.01, allowing us to reject the null hypothesis of non-stationarity. With the series now stationary, it is ready for further analysis
 
 ### 4.4. Forecast of Daily VRES Production
 
-Let's resume with the ACF and PACF since the GARCH model does not yield the desired result.
+After confirming the stationarity of the VRES daily time series, we proceeded with analyzing its Autocorrelation Function (ACF) and Partial Autocorrelation Function (PACF). The ACF plot (first image) reveals that after the first lag, the autocorrelations drop off quickly and remain within the confidence bounds, suggesting limited autocorrelation beyond the immediate past values. This indicates that the series does not exhibit strong long-term memory, and most of the autocorrelation is explained by the first few lags.
 
 ```{r, acf pacf, echo = FALSE, warning = F}
 # ACF and PACF for the log-transformed differenced series
@@ -993,7 +939,9 @@ acf(vres_log_seasonal_diff_d)
 pacf(vres_log_seasonal_diff_d)
 ```
 
-```{r, acf pacf, echo = FALSE, warning = F}
+The PACF plot (second plot) shows a more gradual decline with significant negative partial autocorrelations up to lags beyond lag 10. This behavior suggests that a few past observations have a direct influence on the current value. We will now proceed with the SARIMA forecast.
+
+```{r, sarima model, echo = FALSE, warning = F}
 
 # Fit a SARIMA model with auto.arima to handle seasonality
 sarima_model <- auto.arima(vres_ts_d, seasonal = TRUE)
@@ -1001,14 +949,28 @@ sarima_model <- auto.arima(vres_ts_d, seasonal = TRUE)
 # Summary of the fitted model
 summary(sarima_model)
 
+```
+
+The fitted SARIMA(3,1,1)(0,1,0)[365] model effectively captures both short-term and seasonal patterns in the VRES time series. The significant autoregressive terms (especially AR1 at 0.3929) and the large negative moving average term (MA1 at -0.9766) indicate that recent past values and residuals from previous periods strongly influence future VRES values. The model shows a good fit with a sigma² of 7.477 and low residual autocorrelation (ACF1 = 0.0009), suggesting that most of the autocorrelation has been captured.
+
+The residual analysis (plot below) further supports the model's adequacy: the residuals appear randomly distributed around zero, the ACF plot of residuals shows significant autocorrelations at the year mark, and the residuals’ histogram closely follows a normal distribution. Error metrics, including an RMSE of 2.547 and MAPE of 27.52%, indicate moderate forecasting accuracy, while the AIC (11819.13) and BIC (11848.12) confirm the model's parsimony. Overall, this SARIMA model provides a good balance between capturing seasonal trends and ensuring predictive accuracy.
+
+```{r, sarima residuals, echo = FALSE, warning = F}
+
 # Check residuals of the SARIMA model
 checkresiduals(sarima_model)
 
-# Forecast the next 365 days (or another period)
-sarima_forecast <- forecast(sarima_model, h = 500)
+```
+
+The SARIMA forecast visualization below provides an outlook for VRES energy production over the next two years, continuing from the historical data. The forecast shows a continuation of the established seasonal patterns, with recurring peaks and troughs that align with the cyclical nature of renewable energy production. The forecasted values exhibit an expected upward trend in energy production, consistent with recent years, indicating a gradual increase in VRES generation. The shaded area around the forecast line represents the prediction intervals, with wider bands toward the end of the forecast horizon, reflecting increased uncertainty as we look further into the future.
+
+```{r, sarima plot, echo = FALSE, warning = F}
+
+# Forecast the next years
+sarima_forecast <- forecast(sarima_model, h = 730)
 
 # Plot the forecast
-plot(sarima_forecast, main="SARIMA Forecast for VRES Time Series")
+#plot(sarima_forecast, main="SARIMA Forecast for VRES Time Series")
 
 # Visualize the SARIMA forecast with confidence intervals
 autoplot(sarima_forecast) +
@@ -1018,6 +980,8 @@ autoplot(sarima_forecast) +
 ```
 
 ### 4.5. Visualization of Day-Ahead Prices
+
+We now would like to turn our attention to the baseload energy prices in EUR/MWh over time. From 2017 through most of 2021, prices remained relatively stable, fluctuating within a narrow range with occasional spikes. However, from the end of 2021 through 2023, there is a sharp and sustained increase in energy prices, with peaks exceeding 600 EUR/MWh and increased volatility. This surge is likely driven by exogenous factors, including the geopolitical tensions and market disruptions we previously identified. After mid-2023, prices gradually return to lower levels but still exhibit heightened volatility compared to pre-2021 levels. This period of extreme price fluctuations highlights the sensitivity of energy markets to external shocks.
 
 ```{r, plot of day-ahead, echo = FALSE, warning = F}
 
