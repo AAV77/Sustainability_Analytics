@@ -1,10 +1,13 @@
 ---
-title: "Evaluation of Variable Renewable Energy Source's contribution to cost of control energy"
+title: "Evaluation of Variable Renewable Energy Source's 
+contribution to cost of control energy"
 author: "Del Conte, Küng, van Lengerich, Vayloyan "
 date: "2024-08-03"
 output:
   pdf_document:
     toc: yes
+    toc_depth: 2
+    number_sections: true
 bibliography: references.bib
 editor_options: 
   chunk_output_type: console
@@ -12,6 +15,7 @@ notes: footnotes
 ---
 
 ```{r, include = F, warning = F}
+library(knitr)
 library(readxl) #install packages first if not done so already
 library(readr)
 library(tidyr)
@@ -304,7 +308,7 @@ sums_2020 <- d.h %>%
 ```
 
 
-```{r, add benchmark data, include = F, warning = F}
+```{r, daily-data_load, include = F, warning = F}
 # Load the datasets
 energy_production <- read_csv("ogd104_stromproduktion_swissgrid.csv")
 energy_prices <- read_csv("ogd106_preise_strom_boerse.csv")
@@ -320,7 +324,7 @@ d.d <- merge(energy_prices, energy_production, by="Datum", all.x=TRUE)
 d.d[is.na(d.d)] <- 0
 ```
 
-```{r, rename variables, include = F, warning = F}
+```{r, daily-data_rename variables, include = F, warning = F}
 
 # Rename columns in dataset
 d.d <- d.d %>%
@@ -335,7 +339,7 @@ d.d <- d.d %>%
   )
 ```
 
-```{r, add vres and non-vres, include = F, warning = F}
+```{r, daily_data-add vres and non-vres, include = F, warning = F}
 
 # Add new columns 'VRES_GWh' and 'Non_VRES_GWh' to d.d
 d.d <- d.d %>%
@@ -346,19 +350,18 @@ d.d <- d.d %>%
 
 # View the first few rows to confirm the new columns
 head(d.d)
-```
 
-```{r, rename variables, include = F, warning = F}
-# Remove clutter
+# remove not needed data
 remove(energy_production, energy_prices)
 ```
-
 
 \newpage
 
 # Introduction
 
-Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[\^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge. [\^sdg]: <https://sdgs.un.org/goals>
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge. 
+
+[^sdg]: <https://sdgs.un.org/goals>
 
 The lack of direct control over production with VRES presents a huge challenge to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
 
@@ -390,17 +393,59 @@ These areas generally focus on both variability of supply and prices. Amongst th
 
 It is the purpose of this study to see whether and if so, to what extent renewable energy sources are related to increasing costs of control energy.
 
-## Data Sources
+\newpage
 
-### Electricity Prices
+# Data Sources
+## Data provided by Swissgrid
+Swissgrid provides a variety of data about electricity in Switzerland, which they make publicly available.[^Swissgrid1] They provide the data in intervals of 15\ minutes. 
+They provide data about the production, consumption for Switzerland and for the individual cantons. Additionally, they also provide the information of amount used and the cost of control energy, split up in positive and negative as well as secondary and tertiary. There is no data provided about primary control energy.
+They state that "The data are reliable from 6 months onwards, until then the partners from the electricity sector who provide Swissgrid with the data can still claim changes."[^Swissgrid1]. The data of the year 2024 will not be used for the Swissgrid data to account for this uncertainty.
 
-Swissgrid provides data on 15-minute electricity prices, divided into secondary and tertiary.
+[^Swissgrid1]: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
-Access: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
+```{r Table-Swissgrid-Data, include = TRUE, echo=FALSE, message=FALSE, warning=FALSE}
 
-### Generation Share Wind and Solar
+# Read the column names and one sample row from the Excel file
+data.example <- read_excel("EnergieUebersichtCH-Example-Data.xlsx",
+                           sheet = "Zeitreihen0h15",
+                           col_names = FALSE,
+                           range = "A1:BM3")
+
+# function to handle splitting of column names
+extract_english_part <- function(text) {
+  parts <- strsplit(text, "&Linebreak%")[[1]]
+  if (length(parts) >= 2) {
+    return(parts[2])
+  } else {
+    return(text)
+  }
+}
+
+# Extract English column names
+v.english_column_names <- sapply(data.example[1, ], extract_english_part)
+
+# Get units and example data row
+v.units <- unlist(data.example[2, ])
+v.example_data_row <- unlist(data.example[3, ])
+
+# Combine into a new data frame
+d.info_df <- data.frame(Column_Name = v.english_column_names,
+                        Type = v.units,
+                        Example_Value = v.example_data_row)
+
+# Create kable, which will be output
+kable(d.info_df, row.names = FALSE,
+      caption = "Data provided from Swissgrid",
+      col.names = c("column name", "type", "example value"))
+```
+
+## Generation Share Wind and Solar
 
 Open Data on VRES Production in Europe, including Switzerland.
+
+**redo this part -> ENTSOE data**
+- Actual load as csv + generation per type as csv
+- MW per blocks of 1 hour, eq. to MWh
 
 Access: <https://data.open-power-system-data.org/time_series>
 
@@ -567,8 +612,8 @@ duplicate_rows
 This plot visualizes the total yearly "costs" (gain in the case of negative values) in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
 
 
+# Control Costs (Time series)
 ## 3. Time Series of Hourly Data
-
 ### 3.1. Visualization of Control Costs
 
 ```{r, vres ts prep, include = FALSE, warning = F}
@@ -582,7 +627,7 @@ d.h$VRES_percent[is.na(d.h$VRES_percent)] <- 0
 VRES_ts <- ts(d.h$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
 ```
 
-```{r, plot ts of vres percent, echo = FALSE, warning = F, message = F}
+```{r, plot ts of control cost, echo = FALSE, warning = F, message = F}
 
 # Create the plot for VRES_percent with a linear trend line
 ggplot(d.h, aes(x = as.Date(Timestamp), y = total_cost_EUR)) +
@@ -619,7 +664,6 @@ plot(cost_decomposed)
 ```
 
 The  decomposition into trend, seasonal, and remainder components provides insights into the underlying structure of the control cost data. The trend component reveals an upward trajectory starting in late 2020, peaking in mid-2023, and slightly declining towards the end of the observation period. This indicates that control costs were steadily increasing over time. The seasonal component exhibits recurring peaks and troughs, which suggests the presence of consistent, cyclical patterns in the control costs. These seasonal fluctuations could be linked to predictable changes in energy demand or production patterns, such as variations in solar and wind power generation.
-
 The remainder (random) component still displays a substantial amount of unexplained variance, especially towards the later years of the time series. There is notable volatility in this component, which could be attributed to external factors or events not captured by the trend or seasonality, such as sudden shifts in energy market conditions or unexpected changes in demand. Given this, while the decomposition successfully highlights the importance of the trend and seasonal components, the remainder indicates a significant level of residual variability that could require further exploration. We believe that exogenous factors, like the war in the Ukraine, have contributed to increased noise in the remainder, starting in 2022. To control for these factors, in the next section, we will consider the time period up to end of 2021.
 
 ### 3.3. Stationarity of Control Costs
@@ -697,7 +741,6 @@ VRES_ts <- ts(d.h$VRES_percent, start = c(2015, 1), end = c(2024, 8), frequency=
 The below plot shows the decomposition of the VRES time series. The observed panel shows seasonal peaks occurring annually, reflecting the cyclical nature of renewable energy generation. The trend component shows a relatively flat trajectory until 2019, after which there is a noticeable upward shift, indicating a substantial increase in VRES share from 2020 onwards. While this upward trend aligns with the growing share of renewable energy sources in the grid, especially solar and wind energy, it is unclear to us at this point whether this sharp increase is due to the heavy ramp-up of VRES or other factors contributing to the surge, such as different calculation methods.
 
 ```{r, vres additive decomposition, echo = FALSE, warning = FALSE}
-
 # Decompose the time series
 VRES_decomposed <- decompose(VRES_ts)
 plot(VRES_decomposed)
@@ -837,13 +880,14 @@ causality(var_model, cause = "VRES_log_seasonal_diff")
 
 The results of the Granger causality test provide strong evidence that VRES Granger-cause changes in control costs. The F-test statistic of 4.8896, with a very low p-value, allows us to confidently reject the null hypothesis that VRES does not Granger-cause control costs. This means that past values of VRES have predictive power over future variations in control costs, suggesting that fluctuations in renewable energy penetration directly influence the costs of maintaining grid stability. This reinforces the findings from the VAR model, where certain lags of VRES were found to have significant effects on control costs. However, the test for instantaneous causality between VRES and control costs yields a Chi-squared statistic of 0.11246 and a p-value of 0.7374, indicating no significant evidence of instantaneous causality between the two variables. In summary, VRES has a predictive, lagged impact on control costs, but the relationship is not instantaneous, highlighting the importance of considering the delayed effects of renewable energy integration on grid operation expenses.
 
-## 4. Time Series of Daily Benchmark Data
+# 4. Time Series of Daily Benchmark Data
+## Daily VRES and non-VRES Production
 
 This chapter deals with the benchmark data of daily VRES production and day-ahead prices.
 
 ### 4.1. Visualization of Daily VRES and non-VRES Production
 
-```{r, sun and wind visualization, echo = FALSE, warning = F}
+```{r, sun and wind visualization, eval = F, echo = FALSE, warning = F}
 
 ggplot(d.d %>%
          select(Date, Photovoltaic_GWh, Wind_GWh) %>%
@@ -860,7 +904,7 @@ ggplot(d.d %>%
 
 The first graph illustrates the evolution of photovoltaic and wind energy production over time. Photovoltaic production (in orange) exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, Wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
 
-```{r, vres visualization, echo = FALSE, warning = F}
+```{r, vres visualization, eval = F, echo = FALSE, warning = F}
 
 ggplot(d.d %>%
          select(Date, VRES_GWh, Non_VRES_GWh) %>%
@@ -879,7 +923,7 @@ The second graph compares VRES (Variable Renewable Energy Sources, including Pho
 
 ### 4.2. Decomposition of Daily VRES Production
 
-```{r, decomposition, echo = FALSE, warning = F}
+```{r, decomposition, eval = F, echo = FALSE, warning = F}
 # Create a time series object for VRES production (Photovoltaic + Wind)
 vres_ts_d <- ts(d.d$VRES_GWh, start = c(2017, 1), frequency = 365)
 
@@ -933,7 +977,7 @@ The first plot presents the fully differenced series, which now fluctuates aroun
 
 After confirming the stationarity of the VRES daily time series, we proceeded with analyzing its Autocorrelation Function (ACF) and Partial Autocorrelation Function (PACF). The ACF plot (first image) reveals that after the first lag, the autocorrelations drop off quickly and remain within the confidence bounds, suggesting limited autocorrelation beyond the immediate past values. This indicates that the series does not exhibit strong long-term memory, and most of the autocorrelation is explained by the first few lags.
 
-```{r, acf pacf, echo = FALSE, warning = F}
+```{r, daily vres acf pacf, eval = F, echo = FALSE, warning = F}
 # ACF and PACF for the log-transformed differenced series
 acf(vres_log_seasonal_diff_d)
 pacf(vres_log_seasonal_diff_d)
@@ -941,7 +985,7 @@ pacf(vres_log_seasonal_diff_d)
 
 The PACF plot (second plot) shows a more gradual decline with significant negative partial autocorrelations up to lags beyond lag 10. This behavior suggests that a few past observations have a direct influence on the current value. We will now proceed with the SARIMA forecast.
 
-```{r, sarima model, echo = FALSE, warning = F}
+```{r, daily vres_sarima model, echo = FALSE, warning = F}
 
 # Fit a SARIMA model with auto.arima to handle seasonality
 sarima_model <- auto.arima(vres_ts_d, seasonal = TRUE)
@@ -979,11 +1023,13 @@ autoplot(sarima_forecast) +
   ylab("Energy Production (GWh)")
 ```
 
+
+## Daily Data of Day-Ahead Prices of Baseload
 ### 4.5. Visualization of Day-Ahead Prices
 
 We now would like to turn our attention to the baseload energy prices in EUR/MWh over time. From 2017 through most of 2021, prices remained relatively stable, fluctuating within a narrow range with occasional spikes. However, from the end of 2021 through 2023, there is a sharp and sustained increase in energy prices, with peaks exceeding 600 EUR/MWh and increased volatility. This surge is likely driven by exogenous factors, including the geopolitical tensions and market disruptions we previously identified. After mid-2023, prices gradually return to lower levels but still exhibit heightened volatility compared to pre-2021 levels. This period of extreme price fluctuations highlights the sensitivity of energy markets to external shocks.
 
-```{r, plot of day-ahead, echo = FALSE, warning = F}
+```{r, day-ahead baseload: plot of day-ahead, eval = F, echo = FALSE, warning = F}
 
 # Create a line plot of Baseload_EUR_MWh over time
 ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
@@ -997,7 +1043,7 @@ ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
 
 ### 4.6. Decomposition of Day-Ahead Prices
 
-```{r, decomposition of day-ahead, echo = FALSE, warning = F}
+```{r, day-ahead baseload_decomposition, eval = F,  echo = FALSE, warning = F}
 # Convert the Baseload_EUR_MWh column to a time series object
 # Assuming daily data, we set frequency = 365 for yearly seasonality
 baseload_ts <- ts(d.d$Baseload_EUR_MWh, start = c(2017, 1), frequency = 365)
@@ -1012,7 +1058,7 @@ plot(decomp_baseload)
 
 ### 4.7. Stationarity of Day-Ahead Prices
 
-```{r, differencing of day-ahead, echo = FALSE, warning = F}
+```{r, day-ahead baseload_differencing 1, eval = F, echo = FALSE, warning = F}
 # Apply first-order differencing to remove the trend
 diff_baseload_ts <- diff(baseload_ts, differences = 1)
 
@@ -1027,7 +1073,7 @@ plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Serie
 
 ```
 
-```{r, differencing baseload, echo = FALSE, warning = F}
+```{r, day-ahead baseload_differencing 2, eval = F, echo = FALSE, warning = F}
 # Apply log transformation (add a small constant to avoid log(0) issues)
 baseload_log_d <- log(baseload_ts + 1e-6)
 
@@ -1045,14 +1091,14 @@ plot(baseload_log_d,
 
 ```
 
-```{r, vres stationarity, echo = FALSE, warning = F}
+```{r, day-ahead baseload_adf, eval = F, echo = FALSE, warning = F}
 # Perform ADF test to check stationarity
 adf.test(baseload_log_seasonal_diff_d)
 ```
 
 #### 4.8. Forecast of Day-Ahead Prices
 
-```{r, plot of day-ahead, echo = FALSE, warning = F}
+```{r, plot of day-ahead, eval = F, echo = FALSE, warning = F}
 # Fit SARIMA model using auto.arima
 sarima_model_baseload <- auto.arima(baseload_ts, seasonal = TRUE)
 
@@ -1068,7 +1114,6 @@ autoplot(sarima_forecast_baseload) +
   xlab("Date") +
   ylab("Baseload (EUR)")
 ```
-
 
 # Results
 
