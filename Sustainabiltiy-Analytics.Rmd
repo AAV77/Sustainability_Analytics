@@ -1038,7 +1038,7 @@ baseload_log_diff_d <- diff(baseload_log_d)
 baseload_log_seasonal_diff_d <- diff(baseload_log_diff_d, lag = 365)
 sum(is.na(baseload_log_seasonal_diff_d))
 
-plot(baseload_log_seasonal_diff_d, 
+plot(baseload_log_d, 
      main="Log-Transformed and Seasonally Differenced Baseload Time Series", 
      ylab = "Differenced EUR", 
      xlab = NULL)
@@ -1059,8 +1059,8 @@ sarima_model_baseload <- auto.arima(baseload_ts, seasonal = TRUE)
 # Summary of the fitted SARIMA model
 summary(sarima_model_baseload)
 
-# Forecast the next 365 days (or another period)
-sarima_forecast_baseload <- forecast(sarima_model_prices, h = 500)
+# Forecast the next period
+sarima_forecast_baseload <- forecast(sarima_model_baseload, h = 100)
 
 # Visualize the SARIMA forecast with confidence intervals
 autoplot(sarima_forecast_baseload) +
