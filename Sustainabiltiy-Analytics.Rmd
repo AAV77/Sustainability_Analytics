@@ -240,12 +240,12 @@ df_combined_load <- df_combined_load %>%
 
 
 # Merging two combined dataframes on the timestamp
-df_gen_load <- full_join(df_combined_type, df_combined_load,
+df_gen_load_raw <- full_join(df_combined_type, df_combined_load,
                by = "Timestamp") 
 
 
 # Clean up combined df
-df_gen_load <- df_gen_load %>% 
+df_gen_load <- df_gen_load_raw %>% 
   # Remove columns where all values are NAs (Fossil - brown coal for example)
   select(where(~ any(!is.na(.)))) %>% 
   # Remove column are (CH)
@@ -256,6 +256,7 @@ df_gen_load <- df_gen_load %>%
 df_gen_load <- df_gen_load %>%
   mutate(VRES_percent = (`Solar  - Actual Aggregated [MW]` + `Wind Onshore  - Actual Aggregated [MW]`) / `Actual Total Load [MW] - BZN|CH`)
 ```
+
 
 ```{r, join, include= F, warning = F }
 df_combined <- left_join(hourly_summary, df_gen_load, by = "Timestamp") 
@@ -396,12 +397,14 @@ It is the purpose of this study to see whether and if so, to what extent renewab
 \newpage
 
 # Data Sources
-## Data provided by Swissgrid
-Swissgrid provides a variety of data about electricity in Switzerland, which they make publicly available.[^Swissgrid1] They provide the data in intervals of 15\ minutes. 
-They provide data about the production, consumption for Switzerland and for the individual cantons. Additionally, they also provide the information of amount used and the cost of control energy, split up in positive and negative as well as secondary and tertiary. There is no data provided about primary control energy.
-They state that "The data are reliable from 6 months onwards, until then the partners from the electricity sector who provide Swissgrid with the data can still claim changes."[^Swissgrid1]. The data of the year 2024 will not be used for the Swissgrid data to account for this uncertainty.
+## Data source for control energy
+Swissgrid provides a variety of data about electricity in Switzerland, which they make publicly available.[^Swissgrid1] They provide the data in intervals of 15\ minutes. It can be downloaded as a .xls/or/.xlsx file per year. The time period of the data used in the following analysis ranges from the beginning of 2015 until the end of July 2024.
+They provide data about the electricity production and consumption for Switzerland and for the individual cantons. Additionally, they also provide the information about control energy (amount and prize), split up in positive and negative as well as secondary and tertiary. There is no data provided about primary control energy.
+They state that "The data are reliable from 6 months onwards, until then the partners from the electricity sector who provide Swissgrid with the data can still claim changes."[^Swissgrid1]. This should be kept in mind for the time period of 2024.
 
 [^Swissgrid1]: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
+
+The following table shows an excerpt of the data provided by Swissgrid with an example value.
 
 ```{r Table-Swissgrid-Data, include = TRUE, echo=FALSE, message=FALSE, warning=FALSE}
 
@@ -439,17 +442,41 @@ kable(d.info_df, row.names = FALSE,
       col.names = c("column name", "type", "example value"))
 ```
 
-## Generation Share Wind and Solar
+## Data Source for generation share of wind and solar (hourly)
+To obtain the percentage of VRES data from the transparency platform from the European Network of Transmission System Operators for Electricity (enstsoe) was used.[^entsoeSource1] After creating an account the data about grid forecast and load ("Actual Total Load [6.1.A]" and "Day-ahead Total Load Forecast [6.1.B]") and the actual generation per production type ("Aggregated Generation per Type [16.1.B&C]") can be obtained. They provide the data in intervals of 1\ hour and the data can be downloaded as a .csv file with a time span of 1 year. The data was obtained for the same time period as the data from Swissgrid and combined for further analysis.
 
-Open Data on VRES Production in Europe, including Switzerland.
+[^entsoeSource1]: https://transparency.entsoe.eu/
 
-**redo this part -> ENTSOE data**
-- Actual load as csv + generation per type as csv
-- MW per blocks of 1 hour, eq. to MWh
+```{r Table-Entsoe-Data, include = TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+# Extract column names
+v.column_names <- c(colnames(df_gen_load_raw))
 
-Access: <https://data.open-power-system-data.org/time_series>
+# Get example data row
+v.example_data_row <- unlist(as.vector(df_gen_load_raw[10, ]))
 
-## Overview Variable Renewable Energy Sources 
+# Combine into a new data frame
+d.info_df <- data.frame(Column_Name = v.column_names,
+                        Example_Value = v.example_data_row)
+
+# Create kable, which will be output
+kable(d.info_df, row.names = FALSE,
+      caption = "Data provided from entsoe",
+      col.names = c("column name", "example value"))
+```
+
+Many columns could be omitted after loading since they contained only "NA" values for every row (for example "Fossil Brown coal/Lignite - Actual Aggregated [MW]" which are not used to produce electricity in Switzerland).
+
+Using this data the percentage of variable renewables (VRES) was calcuted using the following formula
+$$
+\text{`VRES\_percent`} = \frac{\text{`Solar-Actual Aggregated [MW]`} + \text{`Wind Onshore-Actual Aggregated [MW]`}}{\text{`Actual Total Load [MW] - BZN|CH)`}}
+$$
+
+## Data Source for generation share of wind and solar (daily)
+**Will follow**
+...
+
+
+# Overview Variable Renewable Energy Sources 
 
 
 ```{r Wind and Solar, include = TRUE, echo = FALSE}
@@ -547,7 +574,7 @@ ggplot(d.h)+
   theme_minimal()
 ```
 
-The above graph displays VRES_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. A clearly cyclical wave pattern can be identified, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
+The above graph displays VRES\_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. A clearly cyclical wave pattern can be identified, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
 
 the maximum value has been pushed up noticeably every year since 2020 and almost reached 60%. When looking at the moving average, where each dot represents the average contribution over a 24 hour period, this share is lowered significantly, still reaching a contribution of 20% to the daily production in the last recorded summer of 2024. 
 
@@ -616,7 +643,7 @@ This plot visualizes the total yearly "costs" (gain in the case of negative valu
 ## 3. Time Series of Hourly Data
 ### 3.1. Visualization of Control Costs
 
-```{r, vres ts prep, include = FALSE, warning = F}
+```{r, vres ts prep1, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
 d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
 
@@ -727,7 +754,7 @@ The time series plot of Variable Renewable Energy Sources (VRES) percentage over
 
 ### 3.5. Decomposition of VRES Control Energy
 
-```{r, vres ts prep, include = FALSE, warning = F}
+```{r, vres ts prep2, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
 d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
 
@@ -777,7 +804,7 @@ plot(VRES_log_decomposed)
 
 The decomposition of the log-transformed series still reveals a clear upward trend and significant seasonality, indicating that the series is not yet stationary despite an initial low p-value from the Augmented Dickey-Fuller test. This suggests that, while the variance was stabilized, the time series still contains structural components (trend and seasonal patterns) that need to be addressed. Therefore, the next steps involve applying first-order differencing to remove the underlying trend and seasonal differencing to eliminate cyclical variations. These transformations will help ensure the series is stationary.
 
-```{r, vres stationarity, echo = FALSE, warning = F}
+```{r, vres differencing, echo = FALSE, warning = F}
 # Apply first-order differencing to the log-transformed series
 VRES_log_diff <- diff(VRES_log)
 
@@ -943,7 +970,7 @@ The decomposition reveals a clear linear trend and strong seasonal patterns, wit
 
 As in previous steps, we apply a log-transformation as well as regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
 
-```{r, differencing vres, echo = FALSE, warning = F}
+```{r, differencing vres, eval = F, echo = FALSE, warning = F}
 # Apply log transformation (add a small constant to avoid log(0) issues)
 vres_log_d <- log(vres_ts_d + 1e-6)
 
@@ -960,13 +987,13 @@ plot(vres_log_seasonal_diff_d, main="Log-Transformed and Seasonally Differenced 
 
 ```
 
-```{r, decomposition vres, echo = FALSE, warning = F}
+```{r, decomposition vres, eval = F, echo = FALSE, warning = F}
 # Decomposition of fully differenced time series 
 vres_log_seasonal_diff_d_decomp <- decompose(vres_log_seasonal_diff_d)
 plot(vres_log_seasonal_diff_d_decomp)
 ```
 
-```{r, vres stationarity, echo = TRUE, warning = TRUE}
+```{r, vres stationarity, eval = F, echo = TRUE, warning = TRUE}
 # Perform ADF test to check stationarity
 adf.test(vres_log_seasonal_diff_d)
 ```
@@ -985,7 +1012,7 @@ pacf(vres_log_seasonal_diff_d)
 
 The PACF plot (second plot) shows a more gradual decline with significant negative partial autocorrelations up to lags beyond lag 10. This behavior suggests that a few past observations have a direct influence on the current value. We will now proceed with the SARIMA forecast.
 
-```{r, daily vres_sarima model, echo = FALSE, warning = F}
+```{r, daily vres_sarima model, eval = F, echo = FALSE, warning = F}
 
 # Fit a SARIMA model with auto.arima to handle seasonality
 sarima_model <- auto.arima(vres_ts_d, seasonal = TRUE)
@@ -999,7 +1026,7 @@ The fitted SARIMA(3,1,1)(0,1,0)[365] model effectively captures both short-term 
 
 The residual analysis (plot below) further supports the model's adequacy: the residuals appear randomly distributed around zero, the ACF plot of residuals shows significant autocorrelations at the year mark, and the residuals’ histogram closely follows a normal distribution. Error metrics, including an RMSE of 2.547 and MAPE of 27.52%, indicate moderate forecasting accuracy, while the AIC (11819.13) and BIC (11848.12) confirm the model's parsimony. Overall, this SARIMA model provides a good balance between capturing seasonal trends and ensuring predictive accuracy.
 
-```{r, sarima residuals, echo = FALSE, warning = F}
+```{r, sarima residuals, eval = F, echo = FALSE, warning = F}
 
 # Check residuals of the SARIMA model
 checkresiduals(sarima_model)
@@ -1008,7 +1035,7 @@ checkresiduals(sarima_model)
 
 The SARIMA forecast visualization below provides an outlook for VRES energy production over the next two years, continuing from the historical data. The forecast shows a continuation of the established seasonal patterns, with recurring peaks and troughs that align with the cyclical nature of renewable energy production. The forecasted values exhibit an expected upward trend in energy production, consistent with recent years, indicating a gradual increase in VRES generation. The shaded area around the forecast line represents the prediction intervals, with wider bands toward the end of the forecast horizon, reflecting increased uncertainty as we look further into the future.
 
-```{r, sarima plot, echo = FALSE, warning = F}
+```{r, sarima plot, eval = F, echo = FALSE, warning = F}
 
 # Forecast the next years
 sarima_forecast <- forecast(sarima_model, h = 730)
