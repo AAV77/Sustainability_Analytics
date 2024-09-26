@@ -639,9 +639,9 @@ duplicate_rows
 This plot visualizes the total yearly "costs" (gain in the case of negative values) in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
 
 
-# Control Costs (Time series)
-## 3. Time Series of Hourly Data
-### 3.1. Visualization of Control Costs
+# Control Costs (Time Series)
+## Time Series of Hourly Data
+### Visualization of Control Costs
 
 ```{r, vres ts prep1, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
@@ -654,6 +654,8 @@ d.h$VRES_percent[is.na(d.h$VRES_percent)] <- 0
 VRES_ts <- ts(d.h$VRES_percent, start=c(2015, 1), frequency=24*365.25)  # Assuming hourly data
 ```
 
+The first plot illustrates the cost of control energy over time, measured in EUR per MWh, from 2015 through 2024. The x-axis represents the time period, while the y-axis reflects the control energy costs in EUR. The graph reveals an overall increasing trend in control costs as time progresses, with periods of volatility that become more pronounced starting in late 2020. Although the costs were relatively stable from 2015 until 2020, with only minor spikes, a noticeable rise in both the frequency and magnitude of cost fluctuations is observed from 2021 onwards. This suggests that control energy costs became more volatile, with significant spikes emerging around 2022 and peaking in late 2023 and early 2024.
+
 ```{r, plot ts of control cost, echo = FALSE, warning = F, message = F}
 
 # Create the plot for VRES_percent with a linear trend line
@@ -665,8 +667,6 @@ ggplot(d.h, aes(x = as.Date(Timestamp), y = total_cost_EUR)) +
        x = NULL, 
        y = "Cost in EUR per MWh")
 ```
-
-The first plot illustrates the cost of control energy over time, measured in EUR per MWh, from 2015 through 2024. The x-axis represents the time period, while the y-axis reflects the control energy costs in EUR. The graph reveals an overall increasing trend in control costs as time progresses, with periods of volatility that become more pronounced starting in late 2020. Although the costs were relatively stable from 2015 until 2020, with only minor spikes, a noticeable rise in both the frequency and magnitude of cost fluctuations is observed from 2021 onwards. This suggests that control energy costs became more volatile, with significant spikes emerging around 2022 and peaking in late 2023 and early 2024.
 
 One notable aspect of the data is the presence of multiple sharp peaks, indicating sudden surges in costs, which likely correspond to times of increased demand for control energy or variability in renewable energy generation. These peaks, reaching prices beyond EUR 7.5 million per MWh, imply high operational costs during these periods. Additionally, there are moments where the costs drop to zero or even become negative. Negative costs could imply that Swissgrid occasionally earns money, likely through balancing mechanisms when energy supply exceeds demand, thus allowing the sale of excess energy to other countries.
 
@@ -1070,6 +1070,8 @@ ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
 
 ### 4.6. Decomposition of Day-Ahead Prices
 
+The observed panel of the below decomposition of the baseload energy prices shows the original data with significant spikes in prices from late 2021 through 2023, assumed to correspond to external market shocks. The trend component highlights a clear upward shift during this period, reflecting the sustained increase in energy prices caused by exogenous factors, followed by a gradual decline post-2023. The seasonal component exhibits recurring cyclical patterns, suggesting that energy prices also follow a predictable annual cycle, likely tied to demand patterns or seasonal energy production fluctuations. Lastly, the random component captures residual volatility, with pronounced variability during the price spikes in 2022 and 2023, indicating the presence of irregular shocks not explained by the trend or seasonality. 
+
 ```{r, day-ahead baseload_decomposition, eval = F,  echo = FALSE, warning = F}
 # Convert the Baseload_EUR_MWh column to a time series object
 # Assuming daily data, we set frequency = 365 for yearly seasonality
@@ -1086,17 +1088,17 @@ plot(decomp_baseload)
 ### 4.7. Stationarity of Day-Ahead Prices
 
 ```{r, day-ahead baseload_differencing 1, eval = F, echo = FALSE, warning = F}
-# Apply first-order differencing to remove the trend
-diff_baseload_ts <- diff(baseload_ts, differences = 1)
-
-# Plot the differenced series
-plot(diff_baseload_ts, main="Differenced Baseload Time Series")
-
-# Apply seasonal differencing (assuming yearly seasonality with a frequency of 365)
-seasonal_diff_baseload_ts <- diff(diff_baseload_ts, lag = 365)
-
-# Plot the seasonally differenced series
-plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Series")
+# # Apply first-order differencing to remove the trend
+# diff_baseload_ts <- diff(baseload_ts, differences = 1)
+# 
+# # Plot the differenced series
+# plot(diff_baseload_ts, main="Differenced Baseload Time Series")
+# 
+# # Apply seasonal differencing (assuming yearly seasonality with a frequency of 365)
+# seasonal_diff_baseload_ts <- diff(diff_baseload_ts, lag = 365)
+# 
+# # Plot the seasonally differenced series
+# plot(seasonal_diff_baseload_ts, main="Seasonally Differenced Baseload Time Series")
 
 ```
 
@@ -1111,12 +1113,34 @@ baseload_log_diff_d <- diff(baseload_log_d)
 baseload_log_seasonal_diff_d <- diff(baseload_log_diff_d, lag = 365)
 sum(is.na(baseload_log_seasonal_diff_d))
 
-plot(baseload_log_d, 
+plot(baseload_log_seasonal_diff_d, 
      main="Log-Transformed and Seasonally Differenced Baseload Time Series", 
      ylab = "Differenced EUR", 
      xlab = NULL)
 
 ```
+
+Time series after log-transformation as well as first-order and seasonal differencing still shows a few spikes. We will try to look for outliers.
+
+```{r, outlier_detection, eval = F, echo = FALSE, warning = F}
+# Install necessary package
+install.packages("tsoutliers")
+library(tsoutliers)
+
+# Detect outliers in the time series
+outliers <- tso(baseload_log_seasonal_diff_d)
+
+# View detected outliers
+print(outliers)
+
+# Plot the outliers in the time series
+plot(outliers)
+
+# You can also replace the outliers by using the following function
+baseload_clean <- tsclean(baseload_log_seasonal_diff_d)
+plot(baseload_clean, main="Outlier Corrected Time Series")
+
+
 
 ```{r, day-ahead baseload_adf, eval = F, echo = FALSE, warning = F}
 # Perform ADF test to check stationarity
@@ -1127,13 +1151,13 @@ adf.test(baseload_log_seasonal_diff_d)
 
 ```{r, plot of day-ahead, eval = F, echo = FALSE, warning = F}
 # Fit SARIMA model using auto.arima
-sarima_model_baseload <- auto.arima(baseload_ts, seasonal = TRUE)
+arima_model_baseload <- auto.arima(baseload_ts, seasonal = FALSE)
 
 # Summary of the fitted SARIMA model
-summary(sarima_model_baseload)
+summary(arima_model_baseload)
 
 # Forecast the next period
-sarima_forecast_baseload <- forecast(sarima_model_baseload, h = 100)
+arima_forecast_baseload <- forecast(arima_model_baseload, h = 100)
 
 # Visualize the SARIMA forecast with confidence intervals
 autoplot(sarima_forecast_baseload) +
