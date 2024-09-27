@@ -1102,6 +1102,8 @@ plot(decomp_baseload)
 
 ```
 
+To stabilize the variance and remove the trend and seasonality in the time series, we apply a log-transformation, followed by first-order differencing to eliminate the linear trend and seasonal differencing to account for cyclical patterns in the data.
+
 ```{r, day-ahead baseload_differencing 2, eval = F, echo = FALSE, warning = F}
 # Apply log transformation (add a small constant to avoid log(0) issues)
 baseload_log_d <- log(baseload_ts + 1e-6)
@@ -1120,31 +1122,112 @@ plot(baseload_log_seasonal_diff_d,
 
 ```
 
-Time series after log-transformation as well as first-order and seasonal differencing still shows a few spikes. We will try to look for outliers.
+After the initial transformations, the time series still displays some spikes, which could be indicative of outliers. We employ the z-score method to identify and correct potential outliers. This approach detects extreme values by measuring how many standard deviations a data point is from the mean. However, while this step reduced some variability, the time series still showed variance inconsistency.
 
-```{r, outlier_detection, eval = F, echo = FALSE, warning = F}
-# Install necessary package
-install.packages("tsoutliers")
-library(tsoutliers)
+```{r, outlier_detection1, eval = F, echo = FALSE, warning = F}
+# Calculate z-scores for the time series
+z_scores <- (baseload_log_seasonal_diff_d - mean(baseload_log_seasonal_diff_d, na.rm = TRUE)) / sd(baseload_log_seasonal_diff_d, na.rm = TRUE)
 
-# Detect outliers in the time series
-outliers <- tso(baseload_log_seasonal_diff_d)
+# Set a threshold for outlier detection (commonly 3 standard deviations)
+outliers <- which(abs(z_scores) > 3)
 
-# View detected outliers
+# Print the indices of the detected outliers
 print(outliers)
 
-# Plot the outliers in the time series
-plot(outliers)
+# Replace outliers with NA or the median (imputation)
+baseload_clean <- baseload_log_seasonal_diff_d
+baseload_clean[outliers] <- NA  # Replacing with NA
+baseload_clean <- na.approx(baseload_clean)  # Interpolating NA values
 
-# You can also replace the outliers by using the following function
-baseload_clean <- tsclean(baseload_log_seasonal_diff_d)
-plot(baseload_clean, main="Outlier Corrected Time Series")
+# Plot the cleaned time series
+plot(baseload_clean, main="Cleaned Time Series After Z-Score Outlier Removal")
 
+```
 
+Since the z-score approach does not fully address the variance issues, we turn to the Interquartile Range (IQR) method. The IQR approach is more robust for detecting outliers in time series with non-normal distributions, as it focuses on the middle 50% of the data. 
 
-```{r, day-ahead baseload_adf, eval = F, echo = FALSE, warning = F}
+```{r, outlier_detection2, eval = F, echo = FALSE, warning = F}
+# Calculate the IQR
+Q1 <- quantile(baseload_log_seasonal_diff_d, 0.25, na.rm = TRUE)
+Q3 <- quantile(baseload_log_seasonal_diff_d, 0.75, na.rm = TRUE)
+IQR_value <- IQR(baseload_log_seasonal_diff_d, na.rm = TRUE)
+
+# Define lower and upper bounds for outliers
+lower_bound <- Q1 - 1.5 * IQR_value
+upper_bound <- Q3 + 1.5 * IQR_value
+
+# Detect outliers
+outliers <- which(baseload_log_seasonal_diff_d < lower_bound | baseload_log_seasonal_diff_d > upper_bound)
+
+# Replace outliers with NA or the median (imputation)
+baseload_clean <- baseload_log_seasonal_diff_d
+baseload_clean[outliers] <- NA  # Replacing with NA
+baseload_clean <- na.approx(baseload_clean)  # Interpolating NA values
+
+# Plot the cleaned time series
+plot(baseload_clean, main="Cleaned Time Series After IQR Outlier Removal")
+```
+
+This method looks promising in identifying and treating the outliers, resulting in a more stable time series. We perform a decomposition of the time series after the IQR outlier removal to examine its components.
+
+```{r, decomp_baseload_clean, eval = F, echo = FALSE, warning = F}
+# Decompose the time series
+decomp_baseload_clean <- decompose(baseload_clean)
+
+# Plot the decomposition
+plot(decomp_baseload_clean)
+```
+
+The decomposition of the IQR approach of cleaning the time series still shows a trend. Hence, to address the remaining trend, we apply an additional round of differencing, hoping to remove the remaining trend.
+
+```{r, 2_order_diff_bl, eval = F, echo = FALSE, warning = F}
+# Apply second-order differencing
+baseload_log_diff_second <- diff(baseload_clean)
+
+# Plot the second-order differenced series
+plot(baseload_log_diff_second, main="Second-Order Differenced Baseload Time Series")
+```
+
+Again, the differenced time series looks promising but we will decompose it to ensure stationarity.
+
+```{r, decomp_baseload_clean_2, eval = F, echo = FALSE, warning = F}
+# Decompose the time series
+decomp_baseload_clean_2 <- decompose(baseload_log_diff_second)
+
+# Plot the decomposition
+plot(decomp_baseload_clean_2)
+```
+
+The decomposition of the differenced time series now looks stationary and to statistically verify stationarity, we conduct the ADF-test.
+
+```{r, day-ahead baseload_adf, include = T, eval = T, echo = FALSE, warning = F}
 # Perform ADF test to check stationarity
-adf.test(baseload_log_seasonal_diff_d)
+adf.test(baseload_log_diff_second)
+```
+
+The ADF-test returns a p-value less than 0.01, confirming that the time series is now stationary.
+
+#### Model Selection and Parametrization
+
+```{r, acf_pacf_bl, eval = T, echo = FALSE, warning = F}
+# Plot ACF and PACF
+acf(baseload_log_diff_second, lag.max = 1000, main="ACF of Stationary Series")
+pacf(baseload_log_diff_second, lag.max = 1000, main="PACF of Stationary Series")
+
+```
+
+
+Model selection
+
+```{r, arima_bl, eval = T, echo = FALSE, warning = F}
+model_baseload <- Arima(baseload_log_diff_second, order = c(3, 1, 1))
+summary(model_baseload)
+
+```
+
+```{r, residuals_bl, eval = T, echo = FALSE, warning = F}
+tsdisplay(residuals(model_baseload))
+Box.test(residuals(model_baseload), lag = 20, type = "Ljung-Box")
 ```
 
 #### 4.8. Forecast of Day-Ahead Prices
