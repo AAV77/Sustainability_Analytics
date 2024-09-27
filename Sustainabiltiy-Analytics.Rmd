@@ -1207,7 +1207,7 @@ adf.test(baseload_log_diff_second)
 
 The ADF-test returns a p-value less than 0.01, confirming that the time series is now stationary.
 
-#### Model Selection and Parametrization
+#### Model Specification of Day-Ahead Prices
 
 ```{r, acf_pacf_bl, eval = T, echo = FALSE, warning = F}
 # Plot ACF and PACF
@@ -1216,11 +1216,28 @@ pacf(baseload_log_diff_second, lag.max = 1000, main="PACF of Stationary Series")
 
 ```
 
+The ACF shows significant autocorrelation at various lags and the PACF exhibits various significant lags but is somewhat decaying. Specifically the slow decay in ACF may indicate that the series is not yet stationary, or it could be exhibiting long memory properties. Possible causes include under-differencing, remaining seasonality or long memory processes. Consulting the above decomposition of the second-order differenced time series, we suspect that there may still be some seasonal patterns in the differenced data, so we will further seasonally difference the the time series. 
 
-Model selection
+```{r, diff_season_bl, eval = T, echo = FALSE, warning = F}
+# Diff seasonality
+baseload_log_diff_third <- diff(baseload_log_diff_second, lag = 365)
 
-```{r, arima_bl, eval = T, echo = FALSE, warning = F}
-model_baseload <- Arima(baseload_log_diff_second, order = c(3, 1, 1))
+plot(decompose(baseload_log_diff_third))
+```
+
+
+```{r, acf_pacf_bl, eval = T, echo = FALSE, warning = F}
+# Plot ACF and PACF
+acf(baseload_log_diff_third, lag.max = 1000, main="ACF of Stationary Series")
+pacf(baseload_log_diff_third, lag.max = 1000, main="PACF of Stationary Series")
+
+```
+
+After further inspection of the ACF and PACF, the same problem still persist, limiting the next steps on analyzing the time series. For illustrative purposes, we will commence with the forecast of the baseload prices, using the second-order differenced time seriesn and higher order AR(3) and MA(2) terms, fully understanding that this may result in the model failing the Ljung-Box test.
+
+```{r, arima_bl, eval = T, echo = T, warning = F}
+model_baseload <- Arima(baseload_log_diff_second, order = c(3, 1, 2),
+                        seasonal = list(order = c(0, 1, 0), period = 365))
 summary(model_baseload)
 
 ```
@@ -1230,24 +1247,16 @@ tsdisplay(residuals(model_baseload))
 Box.test(residuals(model_baseload), lag = 20, type = "Ljung-Box")
 ```
 
-#### 4.8. Forecast of Day-Ahead Prices
+As anticipated, the Ljung-Box test has a very low p-value which indicates that we have missed some structures in our time series. The plot below shows the forecast of the second-order differenced time series.
 
-```{r, plot of day-ahead, eval = F, echo = FALSE, warning = F}
-# Fit SARIMA model using auto.arima
-arima_model_baseload <- auto.arima(baseload_ts, seasonal = FALSE)
-
-# Summary of the fitted SARIMA model
-summary(arima_model_baseload)
+```{r, forecast_bl_1, eval = F, echo = FALSE, warning = F}
 
 # Forecast the next period
-arima_forecast_baseload <- forecast(arima_model_baseload, h = 100)
-
-# Visualize the SARIMA forecast with confidence intervals
-autoplot(sarima_forecast_baseload) +
-  ggtitle("SARIMA Forecast for Baseload Time Series") +
-  xlab("Date") +
-  ylab("Baseload (EUR)")
+arima_forecast_baseload <- forecast(model_baseload, h = 100)
+plot(arima_forecast_baseload)
 ```
+
+If we were to continue the analysis, the next steps would involve reversing the transformations applied to achieve stationarity in order to interpret the forecasts on the original scale. This process includes integrating the forecasted values by  reversing the seasonal and non-seasonal differencing — using the last observed data points as starting values — and then applying the exponential function to undo the log-transformation. By doing so, we would obtain forecasted baseload values that are meaningful and comparable to the original data.
 
 # Results
 
