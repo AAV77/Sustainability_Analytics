@@ -14,7 +14,7 @@ editor_options:
 notes: footnotes
 ---
 
-```{r, include = F, warning = F}
+```{r, load libraries, include = F, warning = F}
 library(knitr)
 library(readxl) #install packages first if not done so already
 library(readr)
@@ -382,6 +382,13 @@ The third claim is particularly relevant for control energy's price. The reason 
 
 One aspect of electricity prices is the price paid for control energy. This is the short term (up to 15 min) electricity supply used to keep the grid at a constant frequency, due to unforeseen changes in supply and demand. It is necessary since the amount of energy consumed and produced must always be identical. The increased penetration of VRES, which cannot be steered by operators means that the purchase of such energy should be increasing with more VRES installed on the grid in recent years.
 
+**Add text**
+
+https://www.next-kraftwerke.de/energie-blog/preisschwankungen-regelenergie
+
+https://www.swissgrid.ch/content/dam/swissgrid/about-us/newsroom/dossiers/control-energy-market-en.pdf
+
+
 ## Relevance
 
 If the amount of control electricity purchased by Transmission System Operators increases then this means costs will be passed down to consumers. Since electricity is a primary input in the economy, higher prices will be reflected across the vast majority of goods and services. This is an undesirable outcome. It is therefore important for policymakers, stakeholder and the public to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
@@ -394,7 +401,8 @@ These areas generally focus on both variability of supply and prices. Amongst th
 
 It is the purpose of this study to see whether and if so, to what extent renewable energy sources are related to increasing costs of control energy.
 
-\newpage
+\newpage 
+ 
 
 # Data Sources
 ## Data source for control energy
@@ -442,6 +450,7 @@ kable(d.info_df, row.names = FALSE,
       col.names = c("column name", "type", "example value"))
 ```
 
+\newpage
 ## Data Source for generation share of wind and solar (hourly)
 To obtain the percentage of VRES data from the transparency platform from the European Network of Transmission System Operators for Electricity (enstsoe) was used.[^entsoeSource1] After creating an account the data about grid forecast and load ("Actual Total Load [6.1.A]" and "Day-ahead Total Load Forecast [6.1.B]") and the actual generation per production type ("Aggregated Generation per Type [16.1.B&C]") can be obtained. They provide the data in intervals of 1\ hour and the data can be downloaded as a .csv file with a time span of 1 year. The data was obtained for the same time period as the data from Swissgrid and combined for further analysis.
 
@@ -470,137 +479,28 @@ Using this data the percentage of variable renewables (VRES) was calcuted using 
 $$
 \text{`VRES\_percent`} = \frac{\text{`Solar-Actual Aggregated [MW]`} + \text{`Wind Onshore-Actual Aggregated [MW]`}}{\text{`Actual Total Load [MW] - BZN|CH)`}}
 $$
+\newline
 
 ## Data Source for generation share of wind and solar (daily)
 **Will follow**
 ...
 
+\newpage
+# Data exploration
+## Cost of control energy
 
-# Overview Variable Renewable Energy Sources 
+The cost of control energy was aggregated per year to investigate the trend over the years. The Time-Series analysis in the following chapter will further investigate the fluctuations of the cost during the year / days.
 
+The following plot shows the development of the cost Swissgrid spent on control energy over the years. The expenditure stayed relatively stable until the year of 2020, followed by an increase in 2021 and a big increase in the 2022. From 2023 the cost decreased but remained significantly above the average costs of the years before 2021.
 
-```{r Wind and Solar, include = TRUE, echo = FALSE}
-
-# Plot the Daily Generation with wind in the foreground and solar in the background
-ggplot(d.d) + 
-  # Solar generation in the background
-  geom_line(aes(x = Date, y = Photovoltaic_GWh, color = "Solar"), size = 1) + 
-  # Wind generation in the foreground
-  geom_line(aes(x = Date, y = Wind_GWh, color = "Wind"), size = 1) + 
-  ggtitle("Wind and Solar Generation over Time") +
-  xlab("Date") +
-  ylab("Generation (GWh)") +
-  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
-  theme_minimal() +
-  labs(color = "Generation Type")
-
-#Weekly Moving Average
-# Plot wind in the foreground and solar in the background
-ggplot(d.d) + # Solar generation in the background
-  geom_ma(ma_fun= SMA, n = 7, aes(x = Date, y = Photovoltaic_GWh, color = "Solar"), size = 1) +
-
-# Wind generation in the foreground
-  geom_ma(ma_fun= SMA, n = 24, aes(x = Date, y = Wind_GWh, color = "Wind"), size = 1) + 
-  ggtitle("Wind and Solar Generation Moving Average over Time") +
-  xlab("Time") +
-  ylab("Generation (MW)") +
-  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
-  theme_minimal() +
-  labs(color = "Generation Type")
-
-###################
-
-# Plot the hourly data with wind in the foreground and solar in the background
-ggplot(d.h) + 
-  # Solar generation in the background
-  geom_line(aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) + 
-  # Wind generation in the foreground
-  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), size = 1) + 
-  ggtitle("Wind and Solar Generation over Time") +
-  xlab("Date") +
-  ylab("Generation (GWh)") +
-  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
-  theme_minimal() +
-  labs(color = "Generation Type")
-
-# Daily Moving Average
-# Plot the filtered data with wind in the foreground and solar in the background
-ggplot(d.h) + 
-  # Solar generation in the background
-  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), size = 1) +
-
-# Wind generation in the foreground
-  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), size = 1) + 
-  ggtitle("Wind and Solar Generation Moving Average over Time") +
-  xlab("Time") +
-  ylab("Generation (MW)") +
-  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
-  theme_minimal() +
-  labs(color = "Generation Type")
-
-
-  
-```
-
-```{r VRES, include = TRUE, echo = FALSE}
-
-
-# VRES_percent Range
-
-min_VRES <- min(d.h$VRES_percent, na.rm = TRUE)
-max_VRES <- max(d.h$VRES_percent, na.rm = TRUE)
-
-min_VRES
-max_VRES
-
-
-
-# Plot the filtered data
-ggplot(d.h, aes(x = Timestamp, y = VRES_percent * 100)) + 
-  geom_line(color = "blue") + 
-  ggtitle("VRES Percent over Time") +
-  xlab("Time") +
-  ylab("VRES percent [%]") +
-  scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
-  theme_minimal()
-
-# Moving Average
-ggplot(d.h)+ 
-  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = VRES_percent* 100)) + 
-  ggtitle("VRES_percent Over Time") +
-  xlab("Time") +
-  ylab("VRES percent [%]") +
-  scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
-  theme_minimal()
-```
-
-The above graph displays VRES\_percent (Variable Renewable Energy Sources as a percentage of total energy demand) over time. A clearly cyclical wave pattern can be identified, indicating the presence of seasonality, which is expected due to the seasonal nature of wind and solar energy production. This seasonality reflects the fluctuations in renewable energy availability throughout the year.
-
-the maximum value has been pushed up noticeably every year since 2020 and almost reached 60%. When looking at the moving average, where each dot represents the average contribution over a 24 hour period, this share is lowered significantly, still reaching a contribution of 20% to the daily production in the last recorded summer of 2024. 
-
-
-```{r, Cost of Secondary Control Energy, include = TRUE}
-
-
+```{r, Data exploration_Plot control cost total, include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
 # Cost aggregated by Year
-
-# Convert the 'Timestamp' column to POSIXct format
-d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format = "%Y-%m-%d %H:%M:%S")
-
 # Extract the year from the 'Timestamp' column
 d.h$year <- year(d.h$Timestamp)
 
-# Group by 'year' and summarize the total cost for each year
-df_yearly_cost <- d.h %>%
-  group_by(year) %>%
-  summarise(total_cost = sum(cost_neg_sec_EUR, na.rm = TRUE))
-
-
-# Filter out the year 2024 and group by 'year', then summarize the total cost for each year
-df_yearly_cost <- d.h %>%
-  filter(year != 2024) %>%  # Exclude the year 2024
-  group_by(year) %>%
-  summarise(total_cost = sum(cost_neg_sec_EUR, na.rm = TRUE)) #y-axis with 'Mio' and commas
+# Identify exact duplicate rows
+duplicate_rows <- d.h[duplicated(d.h) | duplicated(d.h, fromLast = TRUE),]
+# no dublicate rows
 
 # Reshape the data into long format, selecting all four relevant columns
 d.h_long <- d.h %>%
@@ -608,35 +508,182 @@ d.h_long <- d.h %>%
   pivot_longer(cols = c(cost_pos_sec_EUR, cost_neg_sec_EUR, cost_pos_ter_EUR, cost_neg_ter_EUR), 
                names_to = "cost_type", values_to = "cost_value")
 
-# Group by 'year' and 'cost_type', then summarize the total cost for each
+d.h_long$cost_type <- factor(d.h_long$cost_type,
+                             levels = c("cost_neg_sec_EUR",
+                                        "cost_pos_sec_EUR",
+                                        "cost_neg_ter_EUR",
+                                        "cost_pos_ter_EUR"))
+# Group by 'year' then summarize the total cost
 df_yearly_cost <- d.h_long %>%
-  group_by(year, cost_type) %>%
+  group_by(year) %>%
   summarise(total_cost = sum(cost_value, na.rm = TRUE)) %>%
   ungroup()
 
-# Create a bar plot for the sum of costs per year, with different colors for each 'cost_type'
-ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cost_type)) +  # Y-axis in millions
-  geom_bar(stat = "identity", position = "dodge", color = "black") +  # Dodge to separate the bars
-  ggtitle("Total Costs of Secondary and Tertiary Control Energy per Year in EUR") +
+ggplot(data = df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, group = 1)) + 
+  # Add solid lines at every 100 Mio
+  geom_hline(yintercept = seq(0, 300, by = 100),
+             linetype = "solid", color = "darkgrey") +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  geom_line(color = "red", linewidth = 1) +
+  geom_point(color = "red", size = 2) +
+  ggtitle("Total Cost of Control Energy") +
   xlab("Year") +
   ylab("Total Cost [EUR]") +
-  scale_y_continuous(labels = label_number(suffix = " Mio", big.mark = ",")) +  # Format y-axis
-
-  # Use the correct order of colors and labels according to the levels of cost_type
-  scale_fill_manual(values = c("skyblue2", "lightblue1", "gold", "yellow"), 
-  breaks = c("cost_pos_sec_EUR", "cost_neg_sec_EUR", "cost_pos_ter_EUR", "cost_neg_ter_EUR"),
-  labels = c("+ Sec.", "- Sec.", "+ Ter.", "- Ter.")) +  # Custom colors and labels
-
+  scale_y_continuous(labels = label_number(suffix = " Mio", big.mark = ","),
+                     expand = expansion(mult = c(0.1, 0.1))) +
+  scale_x_discrete(expand = expansion(mult = c(0.1, 0.1))) +
   theme_minimal() +
-  theme(legend.title = element_blank())  # Hide the legend title
+  theme(legend.title = element_blank(),  # Hide the legend title
+  plot.title = element_text(hjust = 0.5),
+  plot.title.position = "plot")
+```
 
-# Identify exact duplicate rows
-duplicate_rows <- d.h[duplicated(d.h) | duplicated(d.h, fromLast = TRUE), ]
-duplicate_rows
+In the following plot the cost is split up into the cost for the secondary and tertiary control energy (positive and negative). The plot highlights trends in the costs associated with these control energy types. For the years of 2021 to 2023 a substantial negative cost (profit) is shown for the negative tertiary control energy. The positive tertiary control energy shows as the biggest contributor of the overall costs.
+
+```{r, Data exploration_Plot control cost separated,include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
+# Group by 'year' and 'cost_type', then summarize the total cost for each
+df_yearly_cost <- d.h_long %>%
+  group_by(year, cost_type) %>%
+  summarise(total_cost = sum(cost_value, na.rm = TRUE), .groups = 'drop') 
+
+# Create a bar plot for the sum of costs per year, with different colors for each 'cost_type'
+ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cost_type)) +  # Y-axis in millions
+  # Add solid lines at every 100 Mio
+  geom_hline(yintercept = seq(-100, 400, by = 100),
+             linetype = "solid", color = "darkgrey") +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  # Add bar plot
+  geom_bar(stat = "identity", position = position_dodge(width = 0.9),
+           color = "black") +  # Dodge to separate the bars
+  ggtitle("Costs of Secondary and Tertiary Control Energy") +
+  xlab("Year") +
+  ylab("Total Cost [EUR]") +
+  # Format y-axis
+  scale_y_continuous(labels = label_number(suffix = " Mio", big.mark = ","),
+                     breaks = seq(-100, 400, by = 100),
+                     minor_breaks = seq(-100, 400, by = 50),
+                     expand = expansion(mult = c(0.05, 0.05))) +
+  # Custom colors and labels
+  scale_fill_manual(values = c("skyblue2", "lightblue1", "gold", "yellow"), 
+                    breaks = c("cost_neg_sec_EUR", "cost_pos_sec_EUR",
+                               "cost_neg_ter_EUR", "cost_pos_ter_EUR"),
+                    labels = c("neg. Sec.", "pos. Sec.",
+                               "neg. Ter.", "pos. Ter.")) +  
+  scale_x_discrete(expand = expansion(mult = c(0.1, 0.1))) +  
+  theme_minimal() +
+  theme(legend.title = element_blank(),  # Hide the legend title
+  plot.title = element_text(hjust = 0.5),
+  plot.title.position = "plot")
 
 ```
 
-This plot visualizes the total yearly "costs" (gain in the case of negative values) in Euro of secondary and tertiary control energy (positive and negative) from 2015 to 2023. The plot highlights trends in the costs associated with these control energy types, it is clearly visible that these total costs have risen in the last years, seemingly coinciding with the rise of solar energy production seen in our Data. To further analyze this relationship the next chapter will dive deeper into the Analysis using Time series.
+
+## Overview Variable Renewable Energy Sources 
+The following graphs show the power generation of with solar and wind power in Switzerland using the available hourly data from the entsoe platform ([Data Source for generation share of wind and solar (hourly)]).
+The first graph prints the values "as-is" which basically creates a plot where the peak values are displayed. The second plot uses a moving-average (`SMA`) over 24 hours, which displays the average production during a day.
+The graphs show a clear seasonality for the solar power (increased production during the summer). The wind power makes up a small fraction of the power production compared to solar power, especially considering the graphs with the peak hours.
+
+```{r, Data exploration_Plot wind solar hourly,include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
+ggplot(d.h) + 
+  # Solar generation in the background
+  geom_line(aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), linewidth = 1) + 
+  # Wind generation in the foreground
+  geom_line(aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), linewidth = 1) + 
+  ggtitle("Wind and Solar power generation (peak hours)") +
+  xlab("Date") +
+  ylab("Generation (MW)") +
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  labs(color = "Generation Type") + 
+  theme(plot.title = element_text(hjust = 0.5), plot.title.position = "plot")
+```
+
+
+```{r, Data exploration_Plot wind solar hourly MA,include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
+# Daily Moving Average
+# Plot the filtered data with wind in the foreground and solar in the background
+ggplot(d.h) + 
+  # Solar generation in the background
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_solar_generation_actual_MW, color = "Solar"), linewidth = 1) +
+
+# Wind generation in the foreground
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = CH_wind_onshore_generation_actual_MW, color = "Wind"), linewidth = 1) + 
+  ggtitle("Wind and Solar power generation (24h moving average)") +
+  xlab("Time") +
+  ylab("Generation (MW)") +
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  labs(color = "Generation Type") + 
+  theme(plot.title = element_text(hjust = 0.5), plot.title.position = "plot")
+```
+
+With the solar production there seems to be a big change from end of 2019 to beginning of 2020. Up until that moment the production remains low and quite constant over the years. After that the production increases by a factor of approximately 5. It is assumed that the reporting of the data was changed with the start of the year 2020, for example by newly taking into account the production of solar power at individual households. But no source could be found which explained this described change in the production.
+
+Using the daily data from a different data source ([Data Source for generation share of wind and solar (daily)]) there is no jump in production at the start of 2020. This can be seen in the following graph showing development of the daily energy production (in GWh) using this data. The values after the year 2020 are comparable using the different data sets (can be compared by multiplying the 24h moving average by 24 hours).
+
+```{r, Data exploration_Plot wind solar daily,include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
+# Plot the Daily Generation with wind in the foreground and solar in the background
+ggplot(d.d) + 
+  # Solar generation in the background
+  geom_line(aes(x = Date, y = Photovoltaic_GWh,
+                color = "Solar"), linewidth = 1) + 
+  # Wind generation in the foreground
+  geom_line(aes(x = Date, y = Wind_GWh, color = "Wind"), linewidth = 1) + 
+  ggtitle("Wind and Solar power generation (daily data)") +
+  xlab("Date") +
+  ylab("Generation (GWh)") +
+  scale_color_manual(values = c("Wind" = "blue", "Solar" = "orange")) + 
+  theme_minimal() +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  labs(color = "Generation Type") + 
+  theme(plot.title = element_text(hjust = 0.5), plot.title.position = "plot")
+```
+
+The graph below displays VRES\_percent (Variable Renewable Energy production in Switzerland as a percentage of energy consumed) over time. A clearly cyclical  pattern can be identified, indicating the presence of seasonality, which is expected due to the seasonal nature of solar energy production. The effect at the beginning of 2020 is reflected in this graphs as well since the calculation of the percentage of VRES is done using the hourly data of the power generation.
+
+The maximum value has been pushed up noticeably every year since 2020 and almost reached 60%. This high value represents a peak hour. When looking at the moving average, where each dot represents the average contribution over a 24 hour period, this share is lowered significantly, still reaching a contribution of 20% to the daily energy consumed in the last recorded summer of 2024. 
+
+```{r, Data exploration_VRES peak,include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
+# VRES_percent Range
+min_VRES <- min(d.h$VRES_percent, na.rm = TRUE)
+max_VRES <- max(d.h$VRES_percent, na.rm = TRUE)
+
+# Plot the filtered data
+ggplot(d.h, aes(x = Timestamp, y = VRES_percent * 100)) + 
+  geom_line(color = "blue", linetype = "solid", linewidth = 0.5) + 
+  ggtitle("VRES percentage (peak hour)") +
+  xlab("Time") +
+  ylab("VRES percentage") +
+  scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
+  theme_minimal() +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  theme(plot.title = element_text(hjust = 0.5), plot.title.position = "plot")
+```
+
+
+```{r, Data exploration_VRES MA,include = TRUE, echo = FALSE, cache = TRUE, fig.dim = c(7, 3)}
+# Moving Average
+ggplot(d.h)+ 
+  geom_ma(ma_fun= SMA, n = 24, aes(x = Timestamp, y = VRES_percent* 100),
+          linetype = "solid", linewidth = 0.5) + 
+  ggtitle("VRES percentage (24h moving average)") +
+  xlab("Time") +
+  ylab("VRES percentage") +
+  scale_y_continuous(labels = scales::label_number(suffix = "%")) + 
+  theme_minimal() +
+  geom_hline(yintercept = 0,
+             linetype = "solid", color = "black") +
+  theme(plot.title = element_text(hjust = 0.5), plot.title.position = "plot")
+```
+
 
 
 # Control Costs (Time Series)
@@ -884,7 +931,7 @@ VARselect(cbind(costs_log_diff_seasonal, VRES_log_seasonal_diff), lag.max = 10, 
 
 The lag length selection process indicates that the optimal lag length is 10 according to all criteria (AIC, HQ, SC, and FPE). This suggests that incorporating 10 lags will provide the best model fit while capturing the dynamics between the differenced control costs and VRES time series. With this optimal lag length determined, the next step is to estimate the VAR model and analyze the interactions between the variables.
 
-```{r, var model, echo = TRUE, warning = FALSE}
+```{r, var model, echo = TRUE, warning = FALSE, cache = TRUE}
 var_model <- VAR(cbind(costs_log_diff_seasonal, VRES_log_seasonal_diff), 
                  p = 10, type = "const")
 summary(var_model)
@@ -1171,6 +1218,18 @@ autoplot(sarima_forecast_baseload) +
 ## Limitations
 
 -cover general limitations
+
+**Add text**
+
+https://www.elcom.admin.ch/dam/elcom/de/dokumente/2023/berichtregelleistungundregelenergie2022.pdf.download.pdf/Bericht%20Regelleistung%20und%20Regelenergie.pdf
+
+https://www.elcom.admin.ch/dam/elcom/de/dokumente/2024/taetigkeitsbericht2023.pdf.download.pdf/Taetigkeitsbericht_ElCom_2023-DE_Einzelseiten.pdf
+
+Changes in procurement of control energy
+https://www.youtube.com/watch?v=KYGUG217PYY
+
+
+https://www.swissgrid.ch/en/home/newsroom/dossiers/crowd-balancing-platform.html
 
 # Conclusion
 
