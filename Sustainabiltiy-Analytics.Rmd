@@ -357,41 +357,58 @@ remove(energy_production, energy_prices)
 ```
 
 \newpage
-
 # Introduction
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuel **energy sources (@LCElectricity)**. A substrate of RES are so called Variable-RES (VRES), which are electricity sources, whose production cannot easily be increased or decreased by the power plant operator. Wind and Solar both rely on meteorological conditions and if these are not right, nothing is produced. This is contrary to most other energy sources whose production can be increased or decreased according to market needs. although the time it takes to ramp production up or down can still present a challenge. 
 
-Governments and scientists around the world largely agree on the need for a low-carbon electricity production. In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuels (@LCElectricity). A substrate of RES are so called Variable-RES (VRES), which are electricity sources whose production cannot easily be increased or decreased by the operator. Wind and Solar both rely on meteorological conditions, if these are not right, nothing is produced. This is contrary to most other sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge. 
+The lack of direct control over production with VRES presents a challenge to the adoption of such sources, since they lead to an increased need for short and long term energy storage. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but the current capacity needs to be further increased to adapt to the increased percentage of power production from VRES sources.[^energystorage1]
 
-[^sdg]: <https://sdgs.un.org/goals>
-
-The lack of direct control over production with VRES presents a huge challenge to the adoption of such sources, since there is no large scale energy storage available. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but currently these forms of power would not be able to power a country for even a couple of hours.
+[^energystorage1]: https://energy.ec.europa.eu/topics/research-and-technology/energy-storage/recommendations-energy-storage_en
 
 The addition of electricity from VRES has the possibility to:
 
-1.  Drastically lower electricity prices.
-2.  Increase price volatility.
-3.  Rapidly change the quantity of electricity available on the grid in either direction.
+1. Drastically lower electricity prices.[^VRES-L1]
+2. Increase price volatility.
+3. Rapidly change the quantity of electricity available on the grid in either direction.[^VRES-L2]
+
+[^VRES-L1]: https://www.irena.org/news/pressreleases/2022/Jul/Renewable-Power-Remains-Cost-Competitive-amid-Fossil-Fuel-Crisis
+[^VRES-L2]:https://www.next-kraftwerke.de/energie-blog/preisschwankungen-regelenergie
 
 The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price. If they cannot profit - maximize, they will loss - minimize.
 
 The second claim is the case because meteorological events tend to be fairly consistent across an area. When one wind / solar farm is producing, so are the ones around it. This means there is huge downward pressure on prices during periods of favorable VRES production and none at all during unfavorable conditions.
 
-The third claim is particularly relevant for control energy's price. The reason for this is described in the next two points.
+The third claim is particularly relevant for the grid operator, which is responsible for maintaining a stable electricity grid. With the increase of VRES production it can be assumed that the demand for control energy will increase. This increase in demand would lead to higher costs for the TSO and hence for the end consumers.[^next-Kraftwerke]
 
+[^next-Kraftwerke]:https://www.next-kraftwerke.de/energie-blog/preisschwankungen-regelenergie
+
+\newpage
+# Context and Framework
 ## Control Energy
+The Transmission System Operator (TSO) has the responsibility to maintain the stability of the electrical grid. A TSO doesn't produce energy itself, but buys control energy from energy producers or some small consumers. This control energy is used in the event of an imbalance between energy production and consumption on the grid.[^Swissgrid1]
+The control energy is split up in primary, secondary and tertiary control energy. They differ in activation time (30 seconds, 5 minutes and 15 minutes). Control energy can be tendered separately for positive and negative control energy. Positive control energy corresponds to an increase in generation or reducing consumption, while negative control energy involves decreasing generation or increasing consumption.[^Swissgrid2]
+The grid provider pays for the capacity provision (availability of resources that can be mobilized in the required time frame) and for the control energy activated and the costs are passed on to the end consumers.[^elcom2021]
 
-One aspect of electricity prices is the price paid for control energy. This is the short term (up to 15 min) electricity supply used to keep the grid at a constant frequency, due to unforeseen changes in supply and demand. It is necessary since the amount of energy consumed and produced must always be identical. The increased penetration of VRES, which cannot be steered by operators means that the purchase of such energy should be increasing with more VRES installed on the grid in recent years.
+In the Figure \ref{fig:Viz} the event of an energy imbalance on the power grid with the corresponding activation of the control energy is illustrated. It shows the case of the consumption exceeding the production. This could occur for example in the event of an unplanned failure of a power plant. To maintain grid stability (keep the Frequency at the desired 50\ Hz) first the primary positive control energy is activated, which will get replaced by the second control energy, which will get replaced by the tertiary control energy.
 
-**Add text**
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=140mm]{Control-energy-im1.png}
+  \caption{Visualization of energy imbalance and control energy activation, adapted from \href{https://www.swissgrid.ch/dam/swissgrid/about-us/newsroom/dossiers/control-energy-market-en.pdf}{Swissgrid}.}
+  \label{fig:Viz}
+  \centering
+\end{figure}
 
-https://www.next-kraftwerke.de/energie-blog/preisschwankungen-regelenergie
+[^Swissgrid1]: https://www.swissgrid.ch/en/home/about-us/company/what-we-do.html
+[^Swissgrid2]: https://www.swissgrid.ch/en/home/operation/regulation/grid-stability.html
+[^elcom2021]: https://www.elcom.admin.ch/dam/elcom/de/dokumente/2022/berichtregelleistungundregelenergie2021.pdf
 
-https://www.swissgrid.ch/content/dam/swissgrid/about-us/newsroom/dossiers/control-energy-market-en.pdf
-
-
+\newpage
 ## Relevance
 
 If the amount of control electricity purchased by Transmission System Operators increases then this means costs will be passed down to consumers. Since electricity is a primary input in the economy, higher prices will be reflected across the vast majority of goods and services. This is an undesirable outcome. It is therefore important for policymakers, stakeholder and the public to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
+
+In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]
+[^sdg]: <https://sdgs.un.org/goals>
 
 ## Literature Review
 
@@ -408,9 +425,9 @@ It is the purpose of this study to see whether and if so, to what extent renewab
 ## Data source for control energy
 Swissgrid provides a variety of data about electricity in Switzerland, which they make publicly available.[^Swissgrid1] They provide the data in intervals of 15\ minutes. It can be downloaded as a .xls/or/.xlsx file per year. The time period of the data used in the following analysis ranges from the beginning of 2015 until the end of July 2024.
 They provide data about the electricity production and consumption for Switzerland and for the individual cantons. Additionally, they also provide the information about control energy (amount and prize), split up in positive and negative as well as secondary and tertiary. There is no data provided about primary control energy.
-They state that "The data are reliable from 6 months onwards, until then the partners from the electricity sector who provide Swissgrid with the data can still claim changes."[^Swissgrid1]. This should be kept in mind for the time period of 2024.
+They state that "The data are reliable from 6 months onwards, until then the partners from the electricity sector who provide Swissgrid with the data can still claim changes."[^Swissgrid1-gen]. This should be kept in mind for the time period of 2024.
 
-[^Swissgrid1]: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
+[^Swissgrid1-gen]: <https://www.swissgrid.ch/en/home/operation/grid-data/generation.html>
 
 The following table shows an excerpt of the data provided by Swissgrid with an example value.
 
