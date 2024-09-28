@@ -1,5 +1,5 @@
 ---
-title: "1uation of Variable Renewable Energy Source's 
+title: "Evaluation of Variable Renewable Energy Source's 
 contribution to cost of control energy"
 author: "Del Conte, Küng, van Lengerich, Vayloyan "
 date: "2024-08-03"
@@ -581,7 +581,7 @@ ggplot(df_yearly_cost, aes(x = as.factor(year), y = total_cost / 1e6, fill = cos
 
 
 ## Overview Variable Renewable Energy Sources 
-The following graphs show the power generation of with solar and wind power in Switzerland using the available hourly data from the entsoe platform ([Data Source for generation share of wind and solar (hourly)]).
+The following graphs show the power generation of solar and wind power in Switzerland using the available hourly data from the entsoe platform ([Data Source for generation share of wind and solar (hourly)]).
 The first graph prints the values "as-is" which basically creates a plot where the peak values are displayed. The second plot uses a moving-average (`SMA`) over 24 hours, which displays the average production during a day.
 The graphs show a clear seasonality for the solar power (increased production during the summer). The wind power makes up a small fraction of the power production compared to solar power, especially considering the graphs with the peak hours.
 
