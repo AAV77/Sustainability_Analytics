@@ -1,5 +1,5 @@
 ---
-title: "Evaluation of Variable Renewable Energy Source's 
+title: "1uation of Variable Renewable Energy Source's 
 contribution to cost of control energy"
 author: "Del Conte, Küng, van Lengerich, Vayloyan "
 date: "2024-08-03"
@@ -56,7 +56,7 @@ data_list <- list()
 for (s in sheets_after_2015) {
   # Read the Excel file
   df <- read_xls(s, sheet = "Zeitreihen0h15",)
-  df <- df %>% select (1, 7,8,9,10, 22:25) 
+  df <- df %>% select(1, 7,8,9,10, 22:25) 
   
   # Convert the timestamp column
   df[[1]] <- as.numeric(df[[1]])
@@ -961,7 +961,7 @@ This chapter deals with the benchmark data of daily VRES production and day-ahea
 
 ### 4.1. Visualization of Daily VRES and non-VRES Production
 
-```{r, sun and wind visualization, eval = F, echo = FALSE, warning = F}
+```{r, sun and wind visualization, echo = FALSE, warning = F}
 
 ggplot(d.d %>%
          select(Date, Photovoltaic_GWh, Wind_GWh) %>%
@@ -978,7 +978,7 @@ ggplot(d.d %>%
 
 The first graph illustrates the evolution of photovoltaic and wind energy production over time. Photovoltaic production (in orange) exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, Wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
 
-```{r, vres visualization, eval = F, echo = FALSE, warning = F}
+```{r, vres visualization, echo = FALSE, warning = F}
 
 ggplot(d.d %>%
          select(Date, VRES_GWh, Non_VRES_GWh) %>%
@@ -997,7 +997,7 @@ The second graph compares VRES (Variable Renewable Energy Sources, including Pho
 
 ### 4.2. Decomposition of Daily VRES Production
 
-```{r, decomposition, eval = F, echo = FALSE, warning = F}
+```{r, decomposition, echo = FALSE, warning = F}
 # Create a time series object for VRES production (Photovoltaic + Wind)
 vres_ts_d <- ts(d.d$VRES_GWh, start = c(2017, 1), frequency = 365)
 
@@ -1017,7 +1017,7 @@ The decomposition reveals a clear linear trend and strong seasonal patterns, wit
 
 As in previous steps, we apply a log-transformation as well as regular differencing to remove the linear trend and since there is seasonality, we also apply seasonal differencing.
 
-```{r, differencing vres, eval = F, echo = FALSE, warning = F}
+```{r, differencing vres, echo = FALSE, warning = F}
 # Apply log transformation (add a small constant to avoid log(0) issues)
 vres_log_d <- log(vres_ts_d + 1e-6)
 
@@ -1034,13 +1034,13 @@ plot(vres_log_seasonal_diff_d, main="Log-Transformed and Seasonally Differenced 
 
 ```
 
-```{r, decomposition vres, eval = F, echo = FALSE, warning = F}
+```{r, decomposition vres, echo = FALSE, warning = F}
 # Decomposition of fully differenced time series 
 vres_log_seasonal_diff_d_decomp <- decompose(vres_log_seasonal_diff_d)
 plot(vres_log_seasonal_diff_d_decomp)
 ```
 
-```{r, vres stationarity, eval = F, echo = TRUE, warning = TRUE}
+```{r, vres stationarity, echo = TRUE, warning = TRUE}
 # Perform ADF test to check stationarity
 adf.test(vres_log_seasonal_diff_d)
 ```
@@ -1051,7 +1051,7 @@ The first plot presents the fully differenced series, which now fluctuates aroun
 
 After confirming the stationarity of the VRES daily time series, we proceeded with analyzing its Autocorrelation Function (ACF) and Partial Autocorrelation Function (PACF). The ACF plot (first image) reveals that after the first lag, the autocorrelations drop off quickly and remain within the confidence bounds, suggesting limited autocorrelation beyond the immediate past values. This indicates that the series does not exhibit strong long-term memory, and most of the autocorrelation is explained by the first few lags.
 
-```{r, daily vres acf pacf, eval = F, echo = FALSE, warning = F}
+```{r, daily vres acf pacf, echo = FALSE, warning = F}
 # ACF and PACF for the log-transformed differenced series
 acf(vres_log_seasonal_diff_d)
 pacf(vres_log_seasonal_diff_d)
@@ -1059,7 +1059,7 @@ pacf(vres_log_seasonal_diff_d)
 
 The PACF plot (second plot) shows a more gradual decline with significant negative partial autocorrelations up to lags beyond lag 10. This behavior suggests that a few past observations have a direct influence on the current value. We will now proceed with the SARIMA forecast.
 
-```{r, daily vres_sarima model, eval = F, echo = FALSE, warning = F}
+```{r, daily vres_sarima model, echo = FALSE, warning = F, cache = T}
 
 # Fit a SARIMA model with auto.arima to handle seasonality
 sarima_model <- auto.arima(vres_ts_d, seasonal = TRUE)
@@ -1073,7 +1073,7 @@ The fitted SARIMA(3,1,1)(0,1,0)[365] model effectively captures both short-term 
 
 The residual analysis (plot below) further supports the model's adequacy: the residuals appear randomly distributed around zero, the ACF plot of residuals shows significant autocorrelations at the year mark, and the residuals’ histogram closely follows a normal distribution. Error metrics, including an RMSE of 2.547 and MAPE of 27.52%, indicate moderate forecasting accuracy, while the AIC (11819.13) and BIC (11848.12) confirm the model's parsimony. Overall, this SARIMA model provides a good balance between capturing seasonal trends and ensuring predictive accuracy.
 
-```{r, sarima residuals, eval = F, echo = FALSE, warning = F}
+```{r, sarima residuals, echo = FALSE, warning = F}
 
 # Check residuals of the SARIMA model
 checkresiduals(sarima_model)
@@ -1082,7 +1082,7 @@ checkresiduals(sarima_model)
 
 The SARIMA forecast visualization below provides an outlook for VRES energy production over the next two years, continuing from the historical data. The forecast shows a continuation of the established seasonal patterns, with recurring peaks and troughs that align with the cyclical nature of renewable energy production. The forecasted values exhibit an expected upward trend in energy production, consistent with recent years, indicating a gradual increase in VRES generation. The shaded area around the forecast line represents the prediction intervals, with wider bands toward the end of the forecast horizon, reflecting increased uncertainty as we look further into the future.
 
-```{r, sarima plot, eval = F, echo = FALSE, warning = F}
+```{r, sarima plot, echo = FALSE, warning = F, cache = T}
 
 # Forecast the next years
 sarima_forecast <- forecast(sarima_model, h = 730)
@@ -1103,7 +1103,7 @@ autoplot(sarima_forecast) +
 
 We now would like to turn our attention to the baseload energy prices in EUR/MWh over time. From 2017 through most of 2021, prices remained relatively stable, fluctuating within a narrow range with occasional spikes. However, from the end of 2021 through 2023, there is a sharp and sustained increase in energy prices, with peaks exceeding 600 EUR/MWh and increased volatility. This surge is likely driven by exogenous factors, including the geopolitical tensions and market disruptions we previously identified. After mid-2023, prices gradually return to lower levels but still exhibit heightened volatility compared to pre-2021 levels. This period of extreme price fluctuations highlights the sensitivity of energy markets to external shocks.
 
-```{r, day-ahead baseload: plot of day-ahead, eval = F, echo = FALSE, warning = F}
+```{r, day-ahead baseload_plot of day-ahead, echo = FALSE, warning = F}
 
 # Create a line plot of Baseload_EUR_MWh over time
 ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
@@ -1119,7 +1119,7 @@ ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
 
 The observed panel of the below decomposition of the baseload energy prices shows the original data with significant spikes in prices from late 2021 through 2023, assumed to correspond to external market shocks. The trend component highlights a clear upward shift during this period, reflecting the sustained increase in energy prices caused by exogenous factors, followed by a gradual decline post-2023. The seasonal component exhibits recurring cyclical patterns, suggesting that energy prices also follow a predictable annual cycle, likely tied to demand patterns or seasonal energy production fluctuations. Lastly, the random component captures residual volatility, with pronounced variability during the price spikes in 2022 and 2023, indicating the presence of irregular shocks not explained by the trend or seasonality. 
 
-```{r, day-ahead baseload_decomposition, eval = F,  echo = FALSE, warning = F}
+```{r, day-ahead baseload_decomposition,  echo = FALSE, warning = F}
 # Convert the Baseload_EUR_MWh column to a time series object
 # Assuming daily data, we set frequency = 365 for yearly seasonality
 baseload_ts <- ts(d.d$Baseload_EUR_MWh, start = c(2017, 1), frequency = 365)
@@ -1134,7 +1134,7 @@ plot(decomp_baseload)
 
 ### 4.7. Stationarity of Day-Ahead Prices
 
-```{r, day-ahead baseload_differencing 1, eval = F, echo = FALSE, warning = F}
+```{r, day-ahead baseload_differencing 1, echo = FALSE, warning = F}
 # # Apply first-order differencing to remove the trend
 # diff_baseload_ts <- diff(baseload_ts, differences = 1)
 # 
@@ -1151,7 +1151,7 @@ plot(decomp_baseload)
 
 To stabilize the variance and remove the trend and seasonality in the time series, we apply a log-transformation, followed by first-order differencing to eliminate the linear trend and seasonal differencing to account for cyclical patterns in the data.
 
-```{r, day-ahead baseload_differencing 2, eval = F, echo = FALSE, warning = F}
+```{r, day-ahead baseload_differencing 2, echo = FALSE, warning = F}
 # Apply log transformation (add a small constant to avoid log(0) issues)
 baseload_log_d <- log(baseload_ts + 1e-6)
 
@@ -1171,7 +1171,7 @@ plot(baseload_log_seasonal_diff_d,
 
 After the initial transformations, the time series still displays some spikes, which could be indicative of outliers. We employ the z-score method to identify and correct potential outliers. This approach detects extreme values by measuring how many standard deviations a data point is from the mean. However, while this step reduced some variability, the time series still showed variance inconsistency.
 
-```{r, outlier_detection1, eval = F, echo = FALSE, warning = F}
+```{r, outlier_detection1, echo = FALSE, warning = F}
 # Calculate z-scores for the time series
 z_scores <- (baseload_log_seasonal_diff_d - mean(baseload_log_seasonal_diff_d, na.rm = TRUE)) / sd(baseload_log_seasonal_diff_d, na.rm = TRUE)
 
@@ -1193,7 +1193,7 @@ plot(baseload_clean, main="Cleaned Time Series After Z-Score Outlier Removal")
 
 Since the z-score approach does not fully address the variance issues, we turn to the Interquartile Range (IQR) method. The IQR approach is more robust for detecting outliers in time series with non-normal distributions, as it focuses on the middle 50% of the data. 
 
-```{r, outlier_detection2, eval = F, echo = FALSE, warning = F}
+```{r, outlier_detection2, echo = FALSE, warning = F}
 # Calculate the IQR
 Q1 <- quantile(baseload_log_seasonal_diff_d, 0.25, na.rm = TRUE)
 Q3 <- quantile(baseload_log_seasonal_diff_d, 0.75, na.rm = TRUE)
@@ -1217,7 +1217,7 @@ plot(baseload_clean, main="Cleaned Time Series After IQR Outlier Removal")
 
 This method looks promising in identifying and treating the outliers, resulting in a more stable time series. We perform a decomposition of the time series after the IQR outlier removal to examine its components.
 
-```{r, decomp_baseload_clean, eval = F, echo = FALSE, warning = F}
+```{r, decomp_baseload_clean, echo = FALSE, warning = F}
 # Decompose the time series
 decomp_baseload_clean <- decompose(baseload_clean)
 
@@ -1227,7 +1227,7 @@ plot(decomp_baseload_clean)
 
 The decomposition of the IQR approach of cleaning the time series still shows a trend. Hence, to address the remaining trend, we apply an additional round of differencing, hoping to remove the remaining trend.
 
-```{r, 2_order_diff_bl, eval = F, echo = FALSE, warning = F}
+```{r, 2_order_diff_bl, echo = FALSE, warning = F}
 # Apply second-order differencing
 baseload_log_diff_second <- diff(baseload_clean)
 
@@ -1237,7 +1237,7 @@ plot(baseload_log_diff_second, main="Second-Order Differenced Baseload Time Seri
 
 Again, the differenced time series looks promising but we will decompose it to ensure stationarity.
 
-```{r, decomp_baseload_clean_2, eval = F, echo = FALSE, warning = F}
+```{r, decomp_baseload_clean_2, echo = FALSE, warning = F}
 # Decompose the time series
 decomp_baseload_clean_2 <- decompose(baseload_log_diff_second)
 
@@ -1247,7 +1247,7 @@ plot(decomp_baseload_clean_2)
 
 The decomposition of the differenced time series now looks stationary and to statistically verify stationarity, we conduct the ADF-test.
 
-```{r, day-ahead baseload_adf, include = T, eval = T, echo = FALSE, warning = F}
+```{r, day-ahead baseload_adf, include = T, echo = FALSE, warning = F}
 # Perform ADF test to check stationarity
 adf.test(baseload_log_diff_second)
 ```
@@ -1256,7 +1256,7 @@ The ADF-test returns a p-value less than 0.01, confirming that the time series i
 
 #### Model Specification of Day-Ahead Prices
 
-```{r, acf_pacf_bl, eval = T, echo = FALSE, warning = F}
+```{r, acf_pacf_bl_sec, echo = FALSE, warning = F}
 # Plot ACF and PACF
 acf(baseload_log_diff_second, lag.max = 1000, main="ACF of Stationary Series")
 pacf(baseload_log_diff_second, lag.max = 1000, main="PACF of Stationary Series")
@@ -1265,7 +1265,7 @@ pacf(baseload_log_diff_second, lag.max = 1000, main="PACF of Stationary Series")
 
 The ACF shows significant autocorrelation at various lags and the PACF exhibits various significant lags but is somewhat decaying. Specifically the slow decay in ACF may indicate that the series is not yet stationary, or it could be exhibiting long memory properties. Possible causes include under-differencing, remaining seasonality or long memory processes. Consulting the above decomposition of the second-order differenced time series, we suspect that there may still be some seasonal patterns in the differenced data, so we will further seasonally difference the the time series. 
 
-```{r, diff_season_bl, eval = T, echo = FALSE, warning = F}
+```{r, diff_season_bl, echo = FALSE, warning = F}
 # Diff seasonality
 baseload_log_diff_third <- diff(baseload_log_diff_second, lag = 365)
 
@@ -1273,7 +1273,7 @@ plot(decompose(baseload_log_diff_third))
 ```
 
 
-```{r, acf_pacf_bl, eval = T, echo = FALSE, warning = F}
+```{r, acf_pacf_bl_third, echo = FALSE, warning = F}
 # Plot ACF and PACF
 acf(baseload_log_diff_third, lag.max = 1000, main="ACF of Stationary Series")
 pacf(baseload_log_diff_third, lag.max = 1000, main="PACF of Stationary Series")
@@ -1282,21 +1282,21 @@ pacf(baseload_log_diff_third, lag.max = 1000, main="PACF of Stationary Series")
 
 After further inspection of the ACF and PACF, the same problem still persist, limiting the next steps on analyzing the time series. For illustrative purposes, we will commence with the forecast of the baseload prices, using the second-order differenced time seriesn and higher order AR(3) and MA(2) terms, fully understanding that this may result in the model failing the Ljung-Box test.
 
-```{r, arima_bl, eval = T, echo = T, warning = F}
+```{r, arima_bl, echo = T, warning = F, cache = T}
 model_baseload <- Arima(baseload_log_diff_second, order = c(3, 1, 2),
                         seasonal = list(order = c(0, 1, 0), period = 365))
 summary(model_baseload)
 
 ```
 
-```{r, residuals_bl, eval = T, echo = FALSE, warning = F}
+```{r, residuals_bl, echo = FALSE, warning = F}
 tsdisplay(residuals(model_baseload))
 Box.test(residuals(model_baseload), lag = 20, type = "Ljung-Box")
 ```
 
 As anticipated, the Ljung-Box test has a very low p-value which indicates that we have missed some structures in our time series. The plot below shows the forecast of the second-order differenced time series.
 
-```{r, forecast_bl_1, eval = F, echo = FALSE, warning = F}
+```{r, forecast_bl_1, echo = FALSE, warning = F, cache = T}
 
 # Forecast the next period
 arima_forecast_baseload <- forecast(model_baseload, h = 100)
