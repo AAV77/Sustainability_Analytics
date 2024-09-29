@@ -2,7 +2,7 @@
 title: "Evaluation of Variable Renewable Energy Source's 
 contribution to cost of control energy"
 author: "Del Conte, Küng, van Lengerich, Vayloyan "
-date: "2024-08-03"
+date: "2024-09-30"
 output:
   pdf_document:
     toc: yes
@@ -499,6 +499,7 @@ kable(d.info_df, row.names = FALSE,
 \newpage
 ## Data Source for generation share of wind and solar (hourly)
 To obtain the percentage of VRES data from the transparency platform from the European Network of Transmission System Operators for Electricity (enstsoe) was used.[^entsoeSource1] After creating an account the data about grid forecast and load ("Actual Total Load [6.1.A]" and "Day-ahead Total Load Forecast [6.1.B]") and the actual generation per production type ("Aggregated Generation per Type [16.1.B&C]") can be obtained. They provide the data in intervals of 1\ hour and the data can be downloaded as a .csv file with a time span of 1 year. The data was obtained for the same time period as the data from Swissgrid and combined for further analysis.
+The following table shows an excerpt of the data with an example value.
 
 [^entsoeSource1]: https://transparency.entsoe.eu/
 
@@ -525,11 +526,57 @@ Using this data the percentage of variable renewables (VRES) was calcuted using 
 $$
 \text{`VRES\_percent`} = \frac{\text{`Solar-Actual Aggregated [MW]`} + \text{`Wind Onshore-Actual Aggregated [MW]`}}{\text{`Actual Total Load [MW] - BZN|CH)`}}
 $$
-\newline
+
 
 ## Data Source for generation share of wind and solar (daily)
-**Will follow**
-...
+The data of the energy production in Switzerland by production type was obtained from opendata.swiss[^opendataswiss1]:. They provide the data in intervals of 1\ day and the data can be downloaded as a .csv file. The data provides the date, the production type and the production in GWh. The following table shows an excerpt of the data with an example value. From this data the production of VRES was calculated as the sum of the produced wind energy and photovoltaic energy.
+
+[^opendataswiss1]: https://opendata.swiss/en/dataset/energiedashboard-ch-stromproduktion-swissgrid/resource/619e6fa0-7c2b-46dd-9633-7bd60fc5ec16
+
+```{r Table-opendata-production, include = TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+energy_production <- read_csv("ogd104_stromproduktion_swissgrid.csv",
+                              col_types = "c")
+
+# Extract column names
+v.column_names <- c(colnames(energy_production))
+
+# Get example data row
+v.example_data_row <- unlist(as.vector(energy_production[10, ]))
+
+# Combine into a new data frame
+d.info_df <- data.frame(Column_Name = v.column_names,
+                        Example_Value = v.example_data_row)
+
+# Create kable, which will be output
+kable(d.info_df, row.names = FALSE,
+      caption = "Data of daily energy production by type",
+      col.names = c("column name", "example value"))
+```
+
+## Data Source for electricity price
+The data of the electricity price (spot market day-ahead Base) was obtained from opendata.swiss[^opendataswiss2]:. They provide the data in intervals of 1\ day and the data can be downloaded as a .csv file. The data provides the date and the price on the energy market for the following day for base-load energy. The following table shows an excerpt of the data with an example value.
+
+[^opendataswiss2]: https://opendata.swiss/de/dataset/energiedashboard-ch-energiepreise/resource/93f2ba7e-19c4-423f-a9c2-4026da4f131b
+
+```{r Table-opendata-electricity-prices, include = TRUE, echo=FALSE, message=FALSE, warning=FALSE}
+energy_production <- read_csv("ogd106_preise_strom_boerse.csv",
+                              col_types = "c")
+
+# Extract column names
+v.column_names <- c(colnames(energy_production))
+
+# Get example data row
+v.example_data_row <- unlist(as.vector(energy_production[10, ]))
+
+# Combine into a new data frame
+d.info_df <- data.frame(Column_Name = v.column_names,
+                        Example_Value = v.example_data_row)
+
+# Create kable, which will be output
+kable(d.info_df, row.names = FALSE,
+      caption = "Data of day-ahead electricity prices on the spot market",
+      col.names = c("column name", "example value"))
+```
 
 \newpage
 # Data exploration
@@ -869,11 +916,10 @@ adf.test(costs_log_diff_seasonal)
 Finally, an Augmented Dickey-Fuller (ADF) test was performed on the seasonally differenced series, yielding a p-value smaller than 0.01. This result indicates that the null hypothesis of non-stationarity can be rejected with high confidence, confirming that the seasonally differenced series is stationary.
 The combined use of log transformation, first-order differencing, and seasonal differencing ensures that the time series is stationary. This stationarity is crucial for the validity of subsequent modeling, particularly when analyzing the control costs up to the end of 2021 to avoid confounding effects from external shocks like the war in Ukraine.
 
-## Analysis of Percentage of Variable Renewable Energy Sources (VRES)
+## Analysis of hourly Percentage of Variable Renewable Energy Sources (VRES)
 The VRES development of the VRES percentage is visualized and described in Chapter\ 4.2.1.
 
-
-### Decomposition of VRES
+### Decomposition of hourly Percentage of VRES
 ```{r, vres ts prep2, include = FALSE, warning = F}
 # Convert the Timestamp column to a Date-Time object
 d.h$Timestamp <- as.POSIXct(d.h$Timestamp, format="%Y-%m-%d %H:%M:%S")
@@ -903,7 +949,7 @@ The seasonal component exhibits a clear and consistent annual pattern, with larg
 
 Given the observed trend and seasonality, the analysis of VRES' impact on control costs will focus on the data up to the end of 2021, thereby excluding the post-2021 period where external factors (such as the war in Ukraine) may have contributed to increased volatility.
 
-### Stationarity of VRES
+### Stationarity hourly Percentage of VRES
 
 We are now turning to the stationarity analysis, which will prepare the data for use in a vector autoregression (VAR) model and Granger cusality test aimed at forecasting control costs using VRES as a key predictor.
 
@@ -999,9 +1045,8 @@ adf.test(VRES_log_seasonal_diff)
 
 ```
 
-\newpage
-## Analysis of VRES Impact on Control Energy Costs
-### Vector Autoregression (VAR) of VRES Impact on Control Energy Costs
+## Analysis of Impact of VRES percentage on Control Energy Costs
+### Vector Autoregression (VAR)
 
 The next step in the analysis is to apply a Vector Autoregression (VAR) model to assess the linear interdependencies between time series. In this case, the VAR model will be used to analyze the dynamic relationship between VRES and control costs. By incorporating both the stationary VRES and control cost time series, the VAR model will help identify how changes in VRES affect control costs over time while accounting for the lagged effects of each variable on the other. We hope to provide insights into the impact of renewable energy integration on the grid's operational costs. We start by determining the optimal lag length.
 
@@ -1061,7 +1106,7 @@ The results of the VAR model estimation provide valuable insights into the dynam
 
 For the equation predicting VRES (VRES_log_seasonal_diff), most of the significant effects are driven by the variable's own lags, rather than control costs. VRES is highly influenced by its own history, with significant coefficients at many lags (1, 2, 3, 4, 5, and others), demonstrating the strong autocorrelation and persistence in renewable energy generation patterns. Control costs do not appear to significantly influence VRES, with only a few lags (such as lag 9 and 10) showing significant coefficients. The adjusted R-squared of 0.05423 for the VRES equation suggests that other factors, not captured in this model, likely explain the majority of the variation in VRES. The overall low correlation (0.001467) between the residuals of the two equations further confirms that VRES and control costs have a relatively low degree of direct correlation in the residual unexplained portions of the time series. Overall, the results imply that while VRES has a measurable impact on control costs, control costs have little reciprocal effect on VRES generation.
 
-### Granger Causality Test on VRES Impact on Control Energy Costs
+### Granger Causality Test
 
 To further investigate the causal relationship between VRES  and control costs, a Granger causality test will be conducted. This test is designed to determine whether past values of one time series can help predict future values of another. Specifically, it will assess whether changes in VRES "Granger-cause" variations in control costs. By applying this test, we can determine if VRES has a predictive influence on control costs beyond their own historical patterns, solidifying the insights gained from the VAR model. This will provide a more in-depth understanding of the interactions between renewable energy penetration and grid operation costs.
 
@@ -1072,45 +1117,32 @@ causality(var_model, cause = "VRES_log_seasonal_diff")
 
 The results of the Granger causality test provide strong evidence that VRES Granger-cause changes in control costs. The F-test statistic of 4.8896, with a very low p-value, allows us to confidently reject the null hypothesis that VRES does not Granger-cause control costs. This means that past values of VRES have predictive power over future variations in control costs, suggesting that fluctuations in renewable energy penetration directly influence the costs of maintaining grid stability. This reinforces the findings from the VAR model, where certain lags of VRES were found to have significant effects on control costs. However, the test for instantaneous causality between VRES and control costs yields a Chi-squared statistic of 0.11246 and a p-value of 0.7374, indicating no significant evidence of instantaneous causality between the two variables. In summary, VRES has a predictive, lagged impact on control costs, but the relationship is not instantaneous, highlighting the importance of considering the delayed effects of renewable energy integration on grid operation expenses.
 
-\newpage
-## Analysis of Daily VRES and non-VRES Production
-**Verweis auf voriges Kapitel**
+## Analysis of Daily VRES Production
+### Visualization of Daily VRES and non-VRES Production
 
-### 4.1. Visualization of Daily VRES and non-VRES Production
+The daily VRES production is shown and analyzed in Chapter 4.2.1. Photovoltaic production exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, Wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
 
-```{r, sun and wind visualization, echo = FALSE, warning = F}
+The graph below compares VRES (Variable Renewable Energy Sources, including Photovoltaic and Wind) with Non-VRES (comprising Hydro, Nuclear, Storage, and Thermal energy). The Non-VRES sources (in black) dominate total energy production and display significant variability over time, driven by factors such as fluctuating demand and adjustments in non-renewable energy generation. VRES production (in green), while much lower in magnitude, shows a clear seasonal trend, largely driven by photovoltaic energy, with peaks in the summer months.
 
-ggplot(d.d %>%
-         select(Date, Photovoltaic_GWh, Wind_GWh) %>%
-         pivot_longer(cols = c(Photovoltaic_GWh, Wind_GWh), 
-                      names_to = "Source", 
-                      values_to = "GWh"), 
-       aes(x = as.Date(Date), y = GWh, color = Source)) +
-  geom_line(size = 1) +
-  labs(title = "Time Series of Photovoltaic and Wind Energy Production",
-       x = NULL, y = "Energy Production (GWh)") +
-  scale_color_manual(values = c("Photovoltaic_GWh" = "orange", "Wind_GWh" = "darkgrey")) +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
-```
-
-The first graph illustrates the evolution of photovoltaic and wind energy production over time. Photovoltaic production (in orange) exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, Wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
-
-```{r, vres visualization, echo = FALSE, warning = F}
-
+```{r, daily VRES non VRES visualization, echo = FALSE, warning = F, fig.dim = c(7,3)}
 ggplot(d.d %>%
          select(Date, VRES_GWh, Non_VRES_GWh) %>%
          pivot_longer(cols = c(VRES_GWh, Non_VRES_GWh), 
                       names_to = "Source", 
                       values_to = "GWh"), 
-       aes(x = as.Date(Date), y = GWh, color = Source)) +
-  geom_line(size = 1) +
-  labs(title = "Time Series of VRES and Non-VRES Production",
+  aes(x = as.Date(Date), y = GWh, color = Source)) +
+  geom_line(linewidth = 1) +
+  labs(title = "TVRES and Non-VRES Production",
        x = NULL, y = "Energy Production (GWh)") +
-  scale_color_manual(values = c("VRES_GWh" = "darkgreen", "Non_VRES_GWh" = "black")) +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+  scale_color_manual(values = c(
+    "VRES_GWh" = "darkgreen", "Non_VRES_GWh" = "black")) +
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y",
+               limits = c(as.Date("2017-01-01"), as.Date("2024-11-30"))) +
+  theme_minimal() +
+  theme(legend.title = element_blank(),  # Hide the legend title
+  plot.title = element_text(hjust = 0.5),
+  plot.title.position = "plot")
 ```
-
-The second graph compares VRES (Variable Renewable Energy Sources, including Photovoltaic and Wind) with Non-VRES (comprising Hydro, Nuclear, Storage, and Thermal energy). The Non-VRES sources (in black) dominate total energy production and display significant variability over time, driven by factors such as fluctuating demand and adjustments in non-renewable energy generation. VRES production (in green), while much lower in magnitude, shows a clear seasonal trend, largely driven by photovoltaic energy, with peaks in the summer months.
 
 ### Decomposition of Daily VRES Production
 
@@ -1134,7 +1166,7 @@ title(main = "Decomposition of additive time series", cex.main = 0.9,
 # head(vres_decomp_d$random)
 ```
 
-The decomposition reveals a clear linear trend and strong seasonal patterns, with some variability in both the seasonal component and residuals. While the seasonal noise is expected due to the nature of renewable energy sources like photovoltaic and wind, it does not obscure the overall pattern. The fluctuations in the residuals suggest potential volatility of variance, but this can be addressed by examining the residuals further after modeling.
+The decomposition of the daily VRES energy production reveals a clear linear trend and strong seasonal patterns, with some variability in both the seasonal component and residuals. While the seasonal noise is expected due to the nature of renewable energy sources like photovoltaic and wind, it does not obscure the overall pattern. The fluctuations in the residuals suggest potential volatility of variance, but this can be addressed by examining the residuals further after modeling.
 
 ### Stationarity of Daily VRES Production
 
@@ -1245,15 +1277,18 @@ autoplot(sarima_forecast) +
 We now would like to turn our attention to the baseload energy prices in EUR/MWh over time. From 2017 through most of 2021, prices remained relatively stable, fluctuating within a narrow range with occasional spikes. However, from the end of 2021 through 2023, there is a sharp and sustained increase in energy prices, with peaks exceeding 600 EUR/MWh and increased volatility. This surge is likely driven by exogenous factors, including the geopolitical tensions and market disruptions we previously identified. After mid-2023, prices gradually return to lower levels but still exhibit heightened volatility compared to pre-2021 levels. This period of extreme price fluctuations highlights the sensitivity of energy markets to external shocks.
 
 ```{r, day-ahead baseload_plot of day-ahead, echo = FALSE, warning = F, fig.dim = c(7,3)}
-
 # Create a line plot of Baseload_EUR_MWh over time
 ggplot(d.d, aes(x = as.Date(Date), y = Baseload_EUR_MWh)) +
   geom_line(color = "darkblue", size = 0.5) +
   labs(title = "Baseload Energy Prices Over Time",
        x = NULL, 
        y = "Baseload (EUR/MWh)") +
-  scale_x_date(date_breaks = "1 year", date_labels = "%Y")
-
+  scale_x_date(date_breaks = "1 year", date_labels = "%Y",
+               limits = c(as.Date("2017-01-01"), as.Date("2024-11-30"))) +
+  theme_minimal() +
+  theme(legend.title = element_blank(),  # Hide the legend title
+  plot.title = element_text(hjust = 0.5),
+  plot.title.position = "plot")
 ```
 
 ### Decomposition of Day-Ahead Prices
@@ -1547,10 +1582,9 @@ par(old_par)
 
 If we were to continue the analysis, the next steps would involve reversing the transformations applied to achieve stationarity in order to interpret the forecasts on the original scale. This process includes integrating the forecasted values by  reversing the seasonal and non-seasonal differencing — using the last observed data points as starting values — and then applying the exponential function to undo the log-transformation. By doing so, we would obtain forecasted baseload values that are meaningful and comparable to the original data.
 
-# Results
+\newpage
 
-## Limitations
-
+# Limitations and Outlook
 -cover general limitations
 
 **Add text**
@@ -1564,10 +1598,6 @@ https://www.youtube.com/watch?v=KYGUG217PYY
 
 
 https://www.swissgrid.ch/en/home/newsroom/dossiers/crowd-balancing-platform.html
-
-# Conclusion
-
-What did we learn, what did we not learn, how does this relate to policymakers.
 
 \newpage
 
