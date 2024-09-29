@@ -358,10 +358,11 @@ remove(energy_production, energy_prices)
 
 \newpage
 # Introduction
-Governments and scientists around the world largely agree on the need for a low-carbon electricity production. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuel **energy sources (@LCElectricity)**. A substrate of RES are so called Variable-RES (VRES), which are electricity sources, whose production cannot easily be increased or decreased by the power plant operator. Wind and Solar both rely on meteorological conditions and if these are not right, nothing is produced. This is contrary to most other energy sources whose production can be increased or decreased according to market needs. although the time it takes to ramp production up or down can still present a challenge. 
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuel[^LCE-Electricity]. A substrate of RES are so called Variable-RES (VRES), which are electricity sources, whose production cannot easily be increased or decreased by the power plant operator. Wind and Solar both rely on meteorological conditions and if these are not right, nothing is produced. This is contrary to most other energy sources whose production can be increased or decreased according to market needs. although the time it takes to ramp production up or down can still present a challenge. 
 
 The lack of direct control over production with VRES presents a challenge to the adoption of such sources, since they lead to an increased need for short and long term energy storage. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but the current capacity needs to be further increased to adapt to the increased percentage of power production from VRES sources.[^energystorage1]
 
+[^LCE-Electricity]: https://www.nrel.gov/docs/fy21osti/80580.pdf
 [^energystorage1]: https://energy.ec.europa.eu/topics/research-and-technology/energy-storage/recommendations-energy-storage_en
 
 The addition of electricity from VRES has the possibility to:
@@ -377,9 +378,7 @@ The reason for the first claim is that VRES has practically no marginal costs. N
 
 The second claim is the case because meteorological events tend to be fairly consistent across an area. When one wind / solar farm is producing, so are the ones around it. This means there is huge downward pressure on prices during periods of favorable VRES production and none at all during unfavorable conditions.
 
-The third claim is particularly relevant for the grid operator, which is responsible for maintaining a stable electricity grid. With the increase of VRES production it can be assumed that the demand for control energy will increase. This increase in demand would lead to higher costs for the TSO and hence for the end consumers.[^next-Kraftwerke]
-
-[^next-Kraftwerke]:https://www.next-kraftwerke.de/energie-blog/preisschwankungen-regelenergie
+The third claim is particularly relevant for the grid operator, which is responsible for maintaining a stable electricity grid. With the increase of VRES production it can be assumed that the demand for control energy will increase. This increase in demand would lead to higher costs for the TSO and hence for the end consumers.
 
 \newpage
 # Context and Framework
@@ -402,24 +401,54 @@ In the Figure \ref{fig:Viz} the event of an energy imbalance on the power grid w
 [^Swissgrid2]: https://www.swissgrid.ch/en/home/operation/regulation/grid-stability.html
 [^elcom2021]: https://www.elcom.admin.ch/dam/elcom/de/dokumente/2022/berichtregelleistungundregelenergie2021.pdf
 
-\newpage
-## Relevance
+## Systemic View
+The electricity production and the maintaining of a stable electricity grid with the various influencing factors, such as the rise of renewable energy sources, is a very complex systemic problem. During the work on this project a lot of thinking went into the variety of influencing factors and interactions withing the system. One product of this process was a simplified dynamic system created using the Tool "Loopy" [^Loopy] (\href{https://tinyurl.com/3yu9ft9n}{Link to created system}).
 
-If the amount of control electricity purchased by Transmission System Operators increases then this means costs will be passed down to consumers. Since electricity is a primary input in the economy, higher prices will be reflected across the vast majority of goods and services. This is an undesirable outcome. It is therefore important for policymakers, stakeholder and the public to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
+[^Loopy]: https://ncase.me/loopy/v1.1/
 
-In the Sustainable Development Goal 7 (affordable and clean energy)[^sdg]
+### Relevant Sustainable Development Goals
+The relevant Sustainable Developlment Goals[^sdg] (SDGs) are shown in \ref{fig:SDG-context}. The most relevant Sustainable Development Goal for the context of this report is SDG\ 7 (affordable and clean energy).
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=140mm]{SDG-context.png}
+  \caption{Affected Sustainable Development Goals, adapted from \href{https://sdgs.un.org/goals}.}
+  \label{fig:SDG-context}
+  \centering
+\end{figure}
+
+As described in the introduction, the expansion of renewable energy sources can achieve both aspects of this goal by reducing the carbon footprint and lowering electricity prices. This effect is also beneficial to achieve SDG 12 and 13. The expected larger cost to stabilize the grid infrastructure leads to additional costs for the end consumers. Reducing the costs to maintain the stability of the grid, taking into account those circumstances, would be beneficial for everyone and help achieve more affordable energy.
+
+A stable grid infrastructure is important for the economy and many aspects of people's personal life (SDG 8 and 9). The production of clean energy also has an effect on SDG 14 and 15. However, there can also be risks concerning these goals. The building and maintaining of new power plants can endanger the habitat of various animals. If additional structures or power plants are needed to stabilize the grid, this could also pose risks concerning these goals.
+
+On the other hand, the development and construction of new renewable energy infrastructure present significant opportunities for job creation and innovation. This aligns with SDG 8, which aims to promote sustained and sustainable economic growth. The need for advanced technologies and innovative solutions to integrate renewable energy sources into the grid can drive research and development.
+
+In conclusion, while the expansion of renewable energy sources comes with certain challenges, the potential benefits in terms of reducing carbon footprints, lowering electricity prices, creating jobs, and fostering innovation make it a crucial endeavor for achieving multiple SDGs.
+
+It is therefore important for policymakers, stakeholder and the public to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
+
 [^sdg]: <https://sdgs.un.org/goals>
+
+### Stakeholders
+In the context of grid stability and control energy, several key stakeholders play crucial roles. Swissgrid, as the TSO in Switzerland, is responsible for managing and maintaining the stability of the electrical grid. They are responsible for ensuring that electricity supply meets demand in real-time, which is essential for preventing blackouts and maintaining a reliable energy supply. 
+
+Policymakers are also vital stakeholders, as they create the regulatory framework and incentives that drive the adoption of renewable energy and the necessary investments in grid infrastructure.
+
+Consumers, too, are important stakeholders. In the end, they pay the price for electricity, which includes a portion for the cost of the infrastructure. Additionally, they can play a role in improving grid stability through the adoption of new smart home technologies and local energy storage solutions.
 
 ## Literature Review
 
-The academic literature on VRES's effect on control energy is fairly sparse. Using the search terms "control energy" and "(variable) renewable energy", only one relevant paper was found. @hirth_control_2013 have found that the inclusion of VRES from 2008-2013 decreases procurement cost of control power by 50%, presumably permitting lower prices for end consumers. The broader literature on the effect of VRES on electricity supply is broader.
+The academic literature on VRES's effect on control energy is fairly sparse. Using the search terms "control energy" and "(variable) renewable energy", only one relevant paper was found. @hirth_control_2013 have found that the inclusion of VRES from 2008-2013 decreased procurement cost of control power by 50%, presumably permitting lower prices for end consumers. 
 
-These areas generally focus on both variability of supply and prices. Amongst them: @pereiradasilva2019 who use EGARCH time series and regression while studying the Iberian power market; @frauendorfer2018 who find that the Swiss are "importing" lower German power prices during peak solar production, as Germany has much more solar energy sources than the Swiss. Finally, the authors @dong2019 find that the Swedish have more stable prices due to the relativley high proportion of non variable fossil and hydropower than the Danes, who are more reliant on VRES in the form of wind and solar. Other studies in the area are more conflicted, such as @rintamäki2017 who compare Germany and Danish prices and wind that the effect of increasing wind production on day ahead prices is not constant. The point is that increasing VRES leads to variability in supply, which presumably means more cost for balancing out an unpredictable supply when the predictions are wrong.
+The literature on the effect of VRES on electricity supply is broader. They generally focus on both variability of supply and prices. Amongst them: @pereiradasilva2019 who use EGARCH time series and regression while studying the Iberian power market; @frauendorfer2018 who find that the Swiss are "importing" lower German power prices during peak solar production, as Germany has much more solar energy sources than the Swiss. Finally, the authors @dong2019 find that the Swedes have more stable prices due to the relatively high proportion of non variable fossil and hydropower than the Danes, who are more reliant on VRES in the form of wind and solar. Other studies in the area are more conflicted, such as @rintamäki2017 who compare Germany and Danish prices and wind that the effect of increasing wind production on day ahead prices is not constant. The point is that increasing VRES leads to variability in supply, which presumably means more cost for balancing out an unpredictable supply when the predictions are wrong.
+
+## Scope of Analyis
+The main question we want to analyse is whether increased variable renewable energy production on the Swiss grid relate to higher cost for control energy.
+
+In the following chapter the data sources used for the analysis will be described following by a data exploration. The further analysis is then performed using Time Series Modelling methods.
 
 It is the purpose of this study to see whether and if so, to what extent renewable energy sources are related to increasing costs of control energy.
-
 \newpage 
- 
 
 # Data Sources
 ## Data source for control energy
@@ -701,8 +730,7 @@ ggplot(d.h)+
   theme(plot.title = element_text(hjust = 0.5), plot.title.position = "plot")
 ```
 
-
-
+\newpage
 # Control Costs (Time Series)
 ## Time Series of Hourly Data
 ### Visualization of Control Costs
