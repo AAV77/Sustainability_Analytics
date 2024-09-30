@@ -1594,9 +1594,9 @@ We examined and explained the differences between positive and negative control 
 
 The cost of control energy was analyzed using the data provided by Swissgrid. The analysis of the yearly costs showed a rise in costs after the year 2020. This period also showed larger variance in the hourly costs of control energy.
 
-The Vector Autoregression analysed in Chapter 5.3 indicates a causal relationship between VRES and hourly control energy costs with VRES lags influencing control costs. This relationship is confirmed by the Granger test, indicating that lags of VRES variability Granger-causes control costs.
+The Vector Autoregression analysed in Chapter 5.3 indicates a causal relationship between VRES and hourly control energy costs with VRES lags influencing control costs. This relationship is confirmed by the Granger test, indicating that lags of VRES variability Granger-causes control costs. The VAR and Granger Causality analyses indicate that the effect of VRES on control energy prices is present but not straightforward. The direction of the effect is context-dependent, as the lags show both positive and negative impacts on control prices. However, it is clear that with more VRES integrated into the grid, the impact on control prices will increase, regardless of the direction of the effect. Swissgrid should consider using more detailed models to predict control energy prices as a function of VRES production.
 
-We expect increasing VRES production as indicated by the SARIMA model of daily VRES production, as well as increasing volatility and higher peaks of day-ahead electricity prices.
+We anticipate increasing VRES production, as indicated by the SARIMA model of daily VRES production, along with rising volatility and higher peaks in day-ahead electricity prices. The forecasted increase in VRES production suggests that anyone relying on a system affected by VRES should carefully evaluate its impact. For Swissgrid in particular, stronger effects on control energy prices can be expected, since, as demonstrated in the VAR and Granger causality analysis, control energy prices are influenced by VRES production.
 
 \subsection*{Limitations}
 
@@ -1610,7 +1610,6 @@ A limitation when looking at the control energy costs is the focus on the activa
 
 A factor not considered in this report is the changes in the procurement procedure for control energy and the effects on the prices[^Procurement]. The addition of direction-specific products since 2018 for example allows for a larger number of producers / consumers to offer their services.
 
-\newpage
 Another significant influence on prices is regulations and international collaboration. In recent years, the collaboration for optimal use of control energy has increased, exemplified by projects such as PICASSO, MARI, and TERRE.[^Swissgrid-projects]. These projects focus, among other things, on implementing platforms for tendering control energy and coordinating the activation of control energy.[^Terre] Switzerland's participation in these international efforts is beneficial and crucial for maintaining grid stability. However, this participation might be challenging to sustain if relations between the EU and Switzerland continue to deteriorate.[^Elcom-taet2023] 
 The implementation of these projects and their impact on control energy costs have not been included in the analysis conducted in this project.
 
