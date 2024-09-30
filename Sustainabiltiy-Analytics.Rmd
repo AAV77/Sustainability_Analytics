@@ -404,7 +404,7 @@ In the Figure \ref{fig:Viz} the event of an energy imbalance on the power grid w
 ## Systemic View
 The electricity production and the maintaining of a stable electricity grid with the various influencing factors, such as the rise of renewable energy sources, is a very complex systemic problem. During the work on this project a lot of thinking went into the variety of influencing factors and interactions withing the system. One product of this process was a simplified dynamic system created using the Tool "Loopy" [^Loopy] (\href{https://tinyurl.com/3yu9ft9n}{Link to created system}).
 
-[^Loopy]: https://ncase.me/loopy/v1.1/
+[^Loopy]: https://ncase.me/loopy/v1.1/?data=%5B%5B%5B5,602,427,0.83,%22Grid%2520infastructure%22,1%5D,%5B6,802,337,0.5,%22Resilience%22,3%5D,%5B7,409,503,0.5,%22Production%2520Renewables%22,4%5D,%5B8,386,295,0.5,%22Volatility%22,2%5D,%5B9,786,590,0.5,%22Regulation%22,1%5D,%5B10,551,683,0.5,%22market%2520mechanics%22,5%5D,%5B12,571,250,0.66,%22Climate%2520Change%22,0%5D,%5B13,1047,474,0.5,%22Exogenous%2520Factors%22,0%5D%5D,%5B%5B5,6,-40,1,0%5D,%5B7,8,35,1,0%5D,%5B8,5,57,-1,0%5D,%5B9,6,4,1,0%5D,%5B9,5,5,1,0%5D,%5B10,6,-239,1,0%5D,%5B6,10,239,-1,0%5D,%5B9,10,-20,-1,0%5D,%5B8,6,-30,-1,0%5D,%5B8,10,-172,1,0%5D,%5B10,5,21,1,0%5D,%5B10,8,172,-1,0%5D,%5B10,9,-61,1,0%5D,%5B12,9,26,1,0%5D,%5B9,7,-11,1,0%5D,%5B7,12,10,-1,0%5D,%5B12,6,49,-1,0%5D,%5B12,8,-186,1,0%5D,%5B7,5,22,-1,0%5D,%5B5,7,18,-1,0%5D,%5B13,12,-161,1,0%5D,%5B13,10,194,1,0%5D,%5B13,10,192,-1,0%5D,%5B13,12,-161,1,0%5D,%5B13,12,-161,1,0%5D%5D,%5B%5D,13%5D
 
 ### Relevant Sustainable Development Goals
 The relevant Sustainable Developlment Goals[^sdg] (SDGs) are shown in \ref{fig:SDG-context}. The most relevant Sustainable Development Goal for the context of this report is SDG\ 7 (affordable and clean energy).
@@ -1590,6 +1590,8 @@ If we were to continue the analysis, the next steps would involve reversing the 
 In this report parts of the complex system of energy production was analyzed.
 
 The electricity consumption and production per type was studied in Switzerland with the focus on Wind and Solar power as Variable Renewable Energy Sources (VRES). The production of the VRES has been steadily growing in the past years, while displaying a clear pattern of seasonality dominated by the Solar production.
+
+We examined and explained the differences between positive and negative control energy, as well as secondary and tertiary control energy, to provide a deeper understanding of their impact on grid stability and cost fluctuations.
 
 The cost of control energy was analyzed using the data provided by Swissgrid. The analysis of the yearly costs showed a rise in the costs after the year 2020. This period also showed larger variance in the hourly costs of control energy.
 
