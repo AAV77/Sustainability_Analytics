@@ -358,23 +358,23 @@ remove(energy_production, energy_prices)
 
 \newpage
 # Introduction
-Governments and scientists around the world largely agree on the need for a low-carbon electricity production. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as Hydropower, Wind and Solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuel[^LCE-Electricity]. A substrate of RES are so called Variable-RES (VRES), which are electricity sources, whose production cannot easily be increased or decreased by the power plant operator. Wind and Solar both rely on meteorological conditions and if these are not right, nothing is produced. This is contrary to most other energy sources whose production can be increased or decreased according to market needs. although the time it takes to ramp production up or down can still present a challenge. 
+Governments and scientists around the world largely agree on the need for a low-carbon electricity production. A step in this direction is the construction, installation and connection of Renewable Energy Sources (RES) such as hydropower, wind and solar to the electricity grid. These produce little to no direct emissions while supplying electricity and have life cycle carbon costs far lower than fossil fuel[^LCE-Electricity]. A substrate of RES are so called Variable-RES (VRES), which are electricity sources, whose production cannot easily be increased or decreased by the power plant operator. Wind and solar both rely on meteorological conditions and if these are not right, nothing is produced. This is contrary to most other energy sources whose production can be increased or decreased according to market needs. Although the time it takes to ramp production up or down can still present a challenge. 
 
 The lack of direct control over production with VRES presents a challenge to the adoption of such sources, since they lead to an increased need for short and long term energy storage. Battery Storage, Pumped Hydro and Heat Pumps do store energy, but the current capacity needs to be further increased to adapt to the increased percentage of power production from VRES sources.[^energystorage1]
 
 [^LCE-Electricity]: https://www.nrel.gov/docs/fy21osti/80580.pdf
 [^energystorage1]: https://energy.ec.europa.eu/topics/research-and-technology/energy-storage/recommendations-energy-storage_en
 
-The addition of electricity from VRES has the possibility to:
+The addition of electricity from VRES has effect of:
 
-1. Drastically lower electricity prices.[^VRES-L1]
-2. Increase price volatility.
-3. Rapidly change the quantity of electricity available on the grid in either direction.[^VRES-L2]
+1. Lowering electricity prices.[^VRES-L1]
+2. Increasing price volatility.
+3. Rapidly changing the quantity of electricity available on the grid in either direction.[^VRES-L2]
 
 [^VRES-L1]: https://www.irena.org/news/pressreleases/2022/Jul/Renewable-Power-Remains-Cost-Competitive-amid-Fossil-Fuel-Crisis
 [^VRES-L2]:https://www.next-kraftwerke.de/energie-blog/preisschwankungen-regelenergie
 
-The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price. If they cannot profit - maximize, they will loss - minimize.
+The reason for the first claim is that VRES has practically no marginal costs. No fuel rods, pumping, gas or other notable inputs are required to produce solar and wind energy. This means producers of VRES will bid their energy at almost any price.
 
 The second claim is the case because meteorological events tend to be fairly consistent across an area. When one wind / solar farm is producing, so are the ones around it. This means there is huge downward pressure on prices during periods of favorable VRES production and none at all during unfavorable conditions.
 
@@ -383,12 +383,12 @@ The third claim is particularly relevant for the grid operator, which is respons
 \newpage
 # Context and Framework
 ## Control Energy
-The Transmission System Operator (TSO) has the responsibility to maintain the stability of the electrical grid. A TSO doesn't produce energy itself, but buys control energy from energy producers or some small consumers. This control energy is used in the event of an imbalance between energy production and consumption on the grid.[^Swissgrid1]
+The Transmission System Operator (TSO) has the responsibility to maintain the stability of the electrical grid. A TSO doesn't produce energy itself, but buys control energy from energy producers or some large consumers. This control energy is used in the event of an imbalance between energy production and consumption on the grid.[^Swissgrid1]
 The control energy is split up in primary, secondary and tertiary control energy. They differ in activation time (30 seconds, 5 minutes and 15 minutes). Furthermore Control Energy is separated between positive and negative control energy. 
 
 Positive control energy corresponds to an increase in generation or reducing consumption, while negative control energy involves decreasing generation or increasing consumption.[^Swissgrid2] The positive secondary control energy is tendered separately from the negative secondary control energy, which is also the case with the tertiary positive / negative control energy. The grid provider pays for the capacity provision (availability of resources that can be mobilized in the required time frame) and for the control energy activated and the costs are passed on to the end consumers.[^elcom2021]
 
-In the Figure \ref{fig:Viz} the event of an energy imbalance on the power grid with the corresponding activation of the control energy is illustrated. It shows the case of the consumption exceeding the production. This could occur for example in the event of an unplanned failure of a power plant. To maintain grid stability (keep the Frequency at the desired 50\ Hz) first the primary positive control energy is activated, which will get replaced by the second control energy, which will get replaced by the tertiary control energy.
+In Figure \ref{fig:Viz} the event of an energy imbalance on the power grid with the corresponding activation of the control energy is illustrated. It shows the case of the consumption exceeding the production. This could occur for example in the event of an unplanned failure of a power plant. To maintain grid stability (keep the frequency at the desired 50\ Hz) first the primary positive control energy is activated, which will get replaced by the secondary control energy, which will get replaced by the tertiary control energy.
 
 \begin{figure}[h]
   \centering
@@ -409,7 +409,7 @@ The electricity production and the maintaining of a stable electricity grid with
 [^Loopy]: https://ncase.me/loopy/v1.1/?data=%5B%5B%5B5,602,427,0.83,%22Grid%2520infastructure%22,1%5D,%5B6,802,337,0.5,%22Resilience%22,3%5D,%5B7,409,503,0.5,%22Production%2520Renewables%22,4%5D,%5B8,386,295,0.5,%22Volatility%22,2%5D,%5B9,786,590,0.5,%22Regulation%22,1%5D,%5B10,551,683,0.5,%22market%2520mechanics%22,5%5D,%5B12,571,250,0.66,%22Climate%2520Change%22,0%5D,%5B13,1047,474,0.5,%22Exogenous%2520Factors%22,0%5D%5D,%5B%5B5,6,-40,1,0%5D,%5B7,8,35,1,0%5D,%5B8,5,57,-1,0%5D,%5B9,6,4,1,0%5D,%5B9,5,5,1,0%5D,%5B10,6,-239,1,0%5D,%5B6,10,239,-1,0%5D,%5B9,10,-20,-1,0%5D,%5B8,6,-30,-1,0%5D,%5B8,10,-172,1,0%5D,%5B10,5,21,1,0%5D,%5B10,8,172,-1,0%5D,%5B10,9,-61,1,0%5D,%5B12,9,26,1,0%5D,%5B9,7,-11,1,0%5D,%5B7,12,10,-1,0%5D,%5B12,6,49,-1,0%5D,%5B12,8,-186,1,0%5D,%5B7,5,22,-1,0%5D,%5B5,7,18,-1,0%5D,%5B13,12,-161,1,0%5D,%5B13,10,194,1,0%5D,%5B13,10,192,-1,0%5D,%5B13,12,-161,1,0%5D,%5B13,12,-161,1,0%5D%5D,%5B%5D,13%5D
 
 ### Relevant Sustainable Development Goals
-The relevant Sustainable Developlment Goals[^sdg] (SDGs) are shown in \ref{fig:SDG-context}. The most relevant Sustainable Development Goal for the context of this report is SDG\ 7 (affordable and clean energy).
+The relevant Sustainable Developlment Goals[^sdg] (SDGs) are shown in Figure \ref{fig:SDG-context}. The most relevant Sustainable Development Goal for the context of this report is SDG\ 7 (affordable and clean energy).
 
 \begin{figure}[hb]
   \centering
@@ -421,13 +421,13 @@ The relevant Sustainable Developlment Goals[^sdg] (SDGs) are shown in \ref{fig:S
 
 As described in the introduction, the expansion of renewable energy sources can achieve both aspects of this goal by reducing the carbon footprint and lowering electricity prices. This effect is also beneficial to achieve SDG 12 and 13. The expected larger cost to stabilize the grid infrastructure leads to additional costs for the end consumers. Reducing the costs to maintain the stability of the grid, taking into account those circumstances, would be beneficial for everyone and help achieve more affordable energy.
 
-A stable grid infrastructure is important for the economy and many aspects of people's personal life (SDG 8 and 9). The production of clean energy also has an effect on SDG 14 and 15. However, there can also be risks concerning these goals. The building and maintaining of new power plants can endanger the habitat of various animals. If additional structures or power plants are needed to stabilize the grid, this could also pose risks concerning these goals.
+A stable grid infrastructure is important for the economy and many aspects of people's personal life (SDG 8 and 9). The production of clean energy also has an effect on SDG 14 and 15. The building and maintaining of new power plants can endanger the habitat of various animals. If additional structures or power plants are needed to stabilize the grid, this could also pose risks concerning these goals.
 
 On the other hand, the development and construction of new renewable energy infrastructure present significant opportunities for job creation and innovation. This aligns with SDG 8, which aims to promote sustained and sustainable economic growth. The need for advanced technologies and innovative solutions to integrate renewable energy sources into the grid can drive research and development.
 
 In conclusion, while the expansion of renewable energy sources comes with certain challenges, the potential benefits in terms of reducing carbon footprints, lowering electricity prices, creating jobs, and fostering innovation make it a crucial endeavor for achieving multiple SDGs.
 
-It is therefore important for policymakers, stakeholder and the public to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
+It is therefore important for stakeholder to understand the drivers of increased prices of control energy. This is particularly important in the context of the SDG 7, which stresses the need for clean energy. Policymakers must understand the impact of increasing the share of VRES on the grid to be aware of potential economic and political backlash of their decisions.
 
 [^sdg]: <https://sdgs.un.org/goals>
 
@@ -445,16 +445,16 @@ The academic literature on VRES's effect on control energy is fairly sparse. Usi
 The literature on the effect of VRES on electricity supply is broader. They generally focus on both variability of supply and prices. Amongst them: @pereiradasilva2019 who use EGARCH time series and regression while studying the Iberian power market; @frauendorfer2018 who find that the Swiss are "importing" lower German power prices during peak solar production, as Germany has much more solar energy sources than the Swiss. Finally, the authors @dong2019 find that the Swedes have more stable prices due to the relatively high proportion of non variable fossil and hydropower than the Danes, who are more reliant on VRES in the form of wind and solar. Other studies in the area are more conflicted, such as @rintamäki2017 who compare Germany and Danish prices and wind that the effect of increasing wind production on day ahead prices is not constant. The point is that increasing VRES leads to variability in supply, which presumably means more cost for balancing out an unpredictable supply when the predictions are wrong.
 
 ## Scope of Analyis
-The main question we want to analyse is whether increased variable renewable energy production on the Swiss grid relate to higher cost for control energy.
+The main question we want to analyse is whether increased variable renewable energy production on the Swiss grid realates to higher cost for control energy.
 
-In the following chapter the data sources used for the analysis will be described following by a data exploration. The further analysis is then performed using Time Series Modelling methods.
+In the following chapter the data sources used for the analysis will be described followed by a data exploration. The further analysis is then performed using Time Series Modelling methods.
 
 It is the purpose of this study to see whether and if so, to what extent renewable energy sources are related to increasing costs of control energy.
 \newpage 
 
 # Data Sources
 ## Data source for control energy
-Swissgrid provides a variety of data about electricity in Switzerland, which they make publicly available.[^Swissgrid1] They provide the data in intervals of 15\ minutes. It can be downloaded as a .xls/or/.xlsx file per year. The time period of the data used in the following analysis ranges from the beginning of 2015 until the end of July 2024.
+Swissgrid provides a variety of data about electricity in Switzerland, which they make publicly available.[^Swissgrid1] They provide the data in intervals of 15\ minutes. It can be downloaded as a .xls or .xlsx file per year. The time period of the data used in the following analysis ranges from the beginning of 2015 until the end of July 2024.
 They provide data about the electricity production and consumption for Switzerland and for the individual cantons. Additionally, they also provide the information about control energy (amount and prize), split up in positive and negative as well as secondary and tertiary. There is no data provided about primary control energy.
 They state that "The data are reliable from 6 months onwards, until then the partners from the electricity sector who provide Swissgrid with the data can still claim changes."[^Swissgrid1-gen]. This should be kept in mind for the time period of 2024.
 
@@ -522,16 +522,15 @@ kable(d.info_df, row.names = FALSE,
       col.names = c("column name", "example value"))
 ```
 
-Many columns could be omitted after loading since they contained only "NA" values for every row (for example "Fossil Brown coal/Lignite - Actual Aggregated [MW]" which are not used to produce electricity in Switzerland).
+Many columns could be omitted after loading since they contained only "NA" values for every row (for example "Fossil Brown coal/Lignite - Actual Aggregated [MW]" which is not used to produce electricity in Switzerland).
 
-Using this data the percentage of variable renewables (VRES) was calcuted using the following formula
+Using this data the percentage of variable renewable energy sources was calculated using the following formula:
 $$
 \text{`VRES\_percent`} = \frac{\text{`Solar-Actual Aggregated [MW]`} + \text{`Wind Onshore-Actual Aggregated [MW]`}}{\text{`Actual Total Load [MW] - BZN|CH)`}}
 $$
 
-
 ## Data Source for generation share of wind and solar (daily)
-The data of the energy production in Switzerland by production type was obtained from opendata.swiss[^opendataswiss1]:. They provide the data in intervals of 1\ day and the data can be downloaded as a .csv file. The data provides the date, the production type and the production in GWh. The following table shows an excerpt of the data with an example value. From this data the production of VRES was calculated as the sum of the produced wind energy and photovoltaic energy.
+The data of the energy production in Switzerland by production type was obtained from opendata.swiss[^opendataswiss1]. They provide the data in intervals of 1\ day and the data can be downloaded as a .csv file. The data provides the date, the production type and the production in GWh. The following table shows an excerpt of the data with an example value. From this data the production of VRES was calculated as the sum of the produced wind energy and solar energy.
 
 [^opendataswiss1]: https://opendata.swiss/en/dataset/energiedashboard-ch-stromproduktion-swissgrid/resource/619e6fa0-7c2b-46dd-9633-7bd60fc5ec16
 
@@ -556,7 +555,7 @@ kable(d.info_df, row.names = FALSE,
 ```
 
 ## Data Source for electricity price
-The data of the electricity price (spot market day-ahead Base) was obtained from opendata.swiss[^opendataswiss2]:. They provide the data in intervals of 1\ day and the data can be downloaded as a .csv file. The data provides the date and the price on the energy market for the following day for base-load energy. The following table shows an excerpt of the data with an example value.
+The data of the electricity price (spot market day-ahead Base) was obtained from opendata.swiss[^opendataswiss2]. They provide the data in intervals of 1\ day and the data can be downloaded as a .csv file. The data provides the date and the price on the energy market for the following day for base-load energy. The following table shows an excerpt of the data with an example value.
 
 [^opendataswiss2]: https://opendata.swiss/de/dataset/energiedashboard-ch-energiepreise/resource/93f2ba7e-19c4-423f-a9c2-4026da4f131b
 
@@ -1122,7 +1121,7 @@ The results of the Granger causality test provide strong evidence that VRES Gran
 ## Analysis of Daily VRES Production
 ### Visualization of Daily VRES and non-VRES Production
 
-The daily VRES production is shown and analyzed in Chapter 4.2.1. Photovoltaic production exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, Wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
+The daily VRES production is shown and analyzed in Chapter 4.2.1. Photovoltaic production exhibits a clear seasonal pattern, with higher output during the summer months and lower production in winter, reflecting the natural variation in solar energy availability. In contrast, wind production (in grey) remains consistently low throughout the year with some fluctuations but no clear trend, indicating that wind energy may play a relatively small role in the overall energy production mix compared to photovoltaic energy.
 
 The graph below compares VRES (Variable Renewable Energy Sources, including Photovoltaic and Wind) with Non-VRES (comprising Hydro, Nuclear, Storage, and Thermal energy). The Non-VRES sources (in black) dominate total energy production and display significant variability over time, driven by factors such as fluctuating demand and adjustments in non-renewable energy generation. VRES production (in green), while much lower in magnitude, shows a clear seasonal trend, largely driven by photovoltaic energy, with peaks in the summer months.
 
@@ -1589,7 +1588,7 @@ If we were to continue the analysis, the next steps would involve reversing the 
 # Conclusions, Limitations and Outlook
 \subsection*{Conclusions}
 
-The electricity consumption and production per type was studied in Switzerland with the focus on Wind and Solar power as Variable Renewable Energy Sources (VRES). The production of the VRES has been steadily growing in the past years, while displaying a clear pattern of seasonality dominated by the Solar production.
+The electricity consumption and production per type was studied in Switzerland with the focus on wind and solar power as Variable Renewable Energy Sources (VRES). The production of the VRES has been steadily growing in the past years, while displaying a clear pattern of seasonality dominated by the solar production.
 
 We examined and explained the differences between positive and negative control energy, as well as secondary and tertiary control energy, to provide a deeper understanding of their impact on grid stability and cost fluctuations.
 
