@@ -1584,7 +1584,30 @@ If we were to continue the analysis, the next steps would involve reversing the 
 
 \newpage
 
-# Limitations and Outlook
+# Conclusions, Limitations and Outlook
+## Conclusions
+In this report parts of the complex system of energy production was analyzed.
+
+The electricity consumption and production per type was studied in Switzerland with the focus on Wind and Solar power as Variable Renewable Energy Sources (VRES). The production of the VRES has been steadily growing in the past years, while displaying a clear pattern of seasonality dominated by the Solar production.
+
+The cost of control energy was analyzed using the data provided by Swissgrid. The analysis of the yearly costs showed a rise in the costs after the year 2020. This period also showed larger variance in the hourly costs of control energy.
+
+**Add text about time series results, influence VRES on Control costs, what was done in the last parts**
+
+## Limitations
+The complexity of the system, as described in Chapter 2.2, constitutes a big challenge in the analysis of interactions within the system of energy production. There are many external factors that influence the electricity and control energy prices. This showed very pronounced in the analysis of the day-ahead electricity prices performed in Chapter\ 5.5. 
+
+A limitation when looking at the control energy costs is the focus on the activated control energy. This is only part of the cost for Swissgrid and therefore the end-consumer. Another part is the cost for the capacity provision. For this cost no raw data was found but the cost is shown in a yearly report from the Federal Electricity Commission (ElCom)[^ELCOM-R-2022]. Those costs vary from approximately 50 - 200 Mio CHF from 2015 to 2021 with a sharp increase to almost 500 Mio CHF in 2022, exceeding the costs for the activation analyzed in this report.
+
+A factor not considered in this report is the changes in the procurement procedure for control energy and the effects on the prices[^Procurement]. Another big influence affecting the prices are regulations and 
+
+**Add text about international collaberation, trading plattforms..** 
+
+[^ELCOM-R-2022]: https://www.elcom.admin.ch/dam/elcom/de/dokumente/2023/berichtregelleistungundregelenergie2022.pdf.download.pdf/Bericht%20Regelleistung%20und%20Regelenergie.pdf
+
+[^Procurement]: https://www.youtube.com/watch?v=KYGUG217PYY
+
+
 -cover general limitations
 
 **Add text**
@@ -1598,6 +1621,14 @@ https://www.youtube.com/watch?v=KYGUG217PYY
 
 
 https://www.swissgrid.ch/en/home/newsroom/dossiers/crowd-balancing-platform.html
+
+## Outlook
+**go further with Time-Series..**
+
+**Work closer together with Stakeholder Swissgrid for example (get more data, get specific questions to adress)**
+
+In this report the focus was set on Switzerland but he electricity market in Europe is very interdependent. The consideration of data about neighboring countries and transfers between the countries might give further insights and improve predictions on the cost of control energy.
+
 
 \newpage
 
