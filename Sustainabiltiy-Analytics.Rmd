@@ -1,7 +1,7 @@
 ---
 title: "Evaluation of Variable Renewable Energy Source's 
-contribution to cost of control energy"
-author: "Del Conte, Küng, van Lengerich, Vayloyan"
+Contribution to Cost of Control Energy"
+author: "Fabian Del Conte, Pascal Küng, Jan van Lengerich, Alec Vayloyan"
 date: "2024-09-30"
 output:
   pdf_document:
@@ -384,14 +384,15 @@ The third claim is particularly relevant for the grid operator, which is respons
 # Context and Framework
 ## Control Energy
 The Transmission System Operator (TSO) has the responsibility to maintain the stability of the electrical grid. A TSO doesn't produce energy itself, but buys control energy from energy producers or some small consumers. This control energy is used in the event of an imbalance between energy production and consumption on the grid.[^Swissgrid1]
-The control energy is split up in primary, secondary and tertiary control energy. They differ in activation time (30 seconds, 5 minutes and 15 minutes). Control energy can be tendered separately for positive and negative control energy. Positive control energy corresponds to an increase in generation or reducing consumption, while negative control energy involves decreasing generation or increasing consumption.[^Swissgrid2]
-The grid provider pays for the capacity provision (availability of resources that can be mobilized in the required time frame) and for the control energy activated and the costs are passed on to the end consumers.[^elcom2021]
+The control energy is split up in primary, secondary and tertiary control energy. They differ in activation time (30 seconds, 5 minutes and 15 minutes). Furthermore Control Energy is separated between positive and negative control energy. 
+
+Positive control energy corresponds to an increase in generation or reducing consumption, while negative control energy involves decreasing generation or increasing consumption.[^Swissgrid2] The positive secondary control energy is tendered separately from the negative secondary control energy, which is also the case with the tertiary positive / negative control energy. The grid provider pays for the capacity provision (availability of resources that can be mobilized in the required time frame) and for the control energy activated and the costs are passed on to the end consumers.[^elcom2021]
 
 In the Figure \ref{fig:Viz} the event of an energy imbalance on the power grid with the corresponding activation of the control energy is illustrated. It shows the case of the consumption exceeding the production. This could occur for example in the event of an unplanned failure of a power plant. To maintain grid stability (keep the Frequency at the desired 50\ Hz) first the primary positive control energy is activated, which will get replaced by the second control energy, which will get replaced by the tertiary control energy.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=140mm]{Control-energy-im1.png}
+  \includegraphics[width=130mm]{Control-energy-im1.png}
   \caption{Visualization of energy imbalance and control energy activation, adapted from \href{https://www.swissgrid.ch/dam/swissgrid/about-us/newsroom/dossiers/control-energy-market-en.pdf}{Swissgrid}.}
   \label{fig:Viz}
   \centering
@@ -401,6 +402,7 @@ In the Figure \ref{fig:Viz} the event of an energy imbalance on the power grid w
 [^Swissgrid2]: https://www.swissgrid.ch/en/home/operation/regulation/grid-stability.html
 [^elcom2021]: https://www.elcom.admin.ch/dam/elcom/de/dokumente/2022/berichtregelleistungundregelenergie2021.pdf
 
+\newpage
 ## Systemic View
 The electricity production and the maintaining of a stable electricity grid with the various influencing factors, such as the rise of renewable energy sources, is a very complex systemic problem. During the work on this project a lot of thinking went into the variety of influencing factors and interactions withing the system. One product of this process was a simplified dynamic system created using the Tool "Loopy" [^Loopy] (\href{https://tinyurl.com/3yu9ft9n}{Link to created system}).
 
@@ -409,9 +411,9 @@ The electricity production and the maintaining of a stable electricity grid with
 ### Relevant Sustainable Development Goals
 The relevant Sustainable Developlment Goals[^sdg] (SDGs) are shown in \ref{fig:SDG-context}. The most relevant Sustainable Development Goal for the context of this report is SDG\ 7 (affordable and clean energy).
 
-\begin{figure}[h]
+\begin{figure}[hb]
   \centering
-  \includegraphics[width=140mm]{SDG-context.png}
+  \includegraphics[width=130mm]{SDG-context.png}
   \caption{Affected Sustainable Development Goals, adapted from \href{https://sdgs.un.org/goals}.}
   \label{fig:SDG-context}
   \centering
@@ -1587,52 +1589,45 @@ If we were to continue the analysis, the next steps would involve reversing the 
 # Conclusions, Limitations and Outlook
 \subsection*{Conclusions}
 
-In this report parts of the complex system of energy production was analyzed.
-
 The electricity consumption and production per type was studied in Switzerland with the focus on Wind and Solar power as Variable Renewable Energy Sources (VRES). The production of the VRES has been steadily growing in the past years, while displaying a clear pattern of seasonality dominated by the Solar production.
 
 We examined and explained the differences between positive and negative control energy, as well as secondary and tertiary control energy, to provide a deeper understanding of their impact on grid stability and cost fluctuations.
 
-The cost of control energy was analyzed using the data provided by Swissgrid. The analysis of the yearly costs showed a rise in the costs after the year 2020. This period also showed larger variance in the hourly costs of control energy.
+The cost of control energy was analyzed using the data provided by Swissgrid. The analysis of the yearly costs showed a rise in costs after the year 2020. This period also showed larger variance in the hourly costs of control energy.
 
-**Add text about time series results, influence VRES on Control costs, what was done in the last parts**
+The Vector Autoregression analysed in Chapter 5.3 indicates a causal relationship between VRES and hourly control energy costs with VRES lags influencing control costs. This relationship is confirmed by the Granger test, indicating that lags of VRES variability Granger-causes control costs.
+
+We expect increasing VRES production as indicated by the SARIMA model of daily VRES production, as well as increasing volatility and higher peaks of day-ahead electricity prices.
 
 \subsection*{Limitations}
 
+The models used in the analysis do not fully account for external shocks like geopolitical events (e.g., the war in Ukraine), which can introduce noise and volatility. The accuracy of the VAR model is sensitive to lag length selection, which could miss shorter or longer-term effects;
+
+Even after applying second-order differencing of the day-ahead prices, we anticipated that the model might still face challenges such as failing the Ljung-Box test due to remaining structures in the time series. Next steps of the day-ahead price analysis would involve reversing the transformations (seasonal and non-seasonal differencing, and log transformation) to interpret the forecast in its original scale.
+
 The complexity of the system, as described in Chapter 2.2, constitutes a big challenge in the analysis of interactions within the system of energy production. There are many external factors that influence the electricity and control energy prices. This showed very pronounced in the analysis of the day-ahead electricity prices performed in Chapter\ 5.5. 
 
-A limitation when looking at the control energy costs is the focus on the activated control energy. This is only part of the cost for Swissgrid and therefore the end-consumer. Another part is the cost for the capacity provision. For this cost no raw data was found but the cost is shown in a yearly report from the Federal Electricity Commission (ElCom)[^ELCOM-R-2022]. Those costs vary from approximately 50 - 200 Mio CHF from 2015 to 2021 with a sharp increase to almost 500 Mio CHF in 2022, exceeding the costs for the activation analyzed in this report.
+A limitation when looking at the control energy costs is the focus on the activated control energy. This is only part of the cost for Swissgrid and therefore the end-consumer. Another part is the cost for the capacity provision. While no raw data was found for this cost, the yearly numbers are published in an annual report from the Federal Electricity Commission[^ELCOM-R-2022]. The cost for provisioning vary from approximately 50 - 200 Mio CHF from 2015 to 2021 with a sharp increase to almost 500 Mio CHF in 2022, exceeding the costs for the activation analyzed in this report.
 
-A factor not considered in this report is the changes in the procurement procedure for control energy and the effects on the prices[^Procurement]. Another big influence affecting the prices are regulations and 
+A factor not considered in this report is the changes in the procurement procedure for control energy and the effects on the prices[^Procurement]. The addition of direction-specific products since 2018 for example allows for a larger number of producers / consumers to offer their services.
 
-**Add text about international collaberation, trading plattforms..** 
+\newpage
+Another significant influence on prices is regulations and international collaboration. In recent years, the collaboration for optimal use of control energy has increased, exemplified by projects such as PICASSO, MARI, and TERRE.[^Swissgrid-projects]. These projects focus, among other things, on implementing platforms for tendering control energy and coordinating the activation of control energy.[^Terre] Switzerland's participation in these international efforts is beneficial and crucial for maintaining grid stability. However, this participation might be challenging to sustain if relations between the EU and Switzerland continue to deteriorate.[^Elcom-taet2023] 
+The implementation of these projects and their impact on control energy costs have not been included in the analysis conducted in this project.
 
 [^ELCOM-R-2022]: https://www.elcom.admin.ch/dam/elcom/de/dokumente/2023/berichtregelleistungundregelenergie2022.pdf.download.pdf/Bericht%20Regelleistung%20und%20Regelenergie.pdf
-
 [^Procurement]: https://www.youtube.com/watch?v=KYGUG217PYY
-
-
--cover general limitations
-
-**Add text**
-
-https://www.elcom.admin.ch/dam/elcom/de/dokumente/2023/berichtregelleistungundregelenergie2022.pdf.download.pdf/Bericht%20Regelleistung%20und%20Regelenergie.pdf
-
-https://www.elcom.admin.ch/dam/elcom/de/dokumente/2024/taetigkeitsbericht2023.pdf.download.pdf/Taetigkeitsbericht_ElCom_2023-DE_Einzelseiten.pdf
-
-Changes in procurement of control energy
-https://www.youtube.com/watch?v=KYGUG217PYY
-
-
-https://www.swissgrid.ch/en/home/newsroom/dossiers/crowd-balancing-platform.html
+[^Swissgrid-projects]: https://www.swissgrid.ch/dam/swissgrid/about-us/newsroom/positions/210421-Factsheet-TERRE-en.pdf
+[^Terre]: https://www.entsoe.eu/network_codes/eb/terre/
+[^Elcom-taet2023]: https://www.elcom.admin.ch/dam/elcom/de/dokumente/2024/taetigkeitsbericht2023.pdf.download.pdf/Taetigkeitsbericht_ElCom_2023-DE_Einzelseiten.pdf
 
 \subsection*{Outlook}
 
-**go further with Time-Series..**
+The limitations described in the previous section highlight starting points for further analysis of control energy costs and the influence of the addition of variable energy production.
 
-**Work closer together with Stakeholder Swissgrid for example (get more data, get specific questions to adress)**
+While this report focuses on Switzerland, it is important to note that the electricity market in Europe is highly interdependent. Considering data from neighboring countries and cross-border transfers could provide additional insights and improve predictions regarding control energy costs.
 
-In this report the focus was set on Switzerland but he electricity market in Europe is very interdependent. The consideration of data about neighboring countries and transfers between the countries might give further insights and improve predictions on the cost of control energy.
+A closer collaboration with stakeholders, such as Swissgrid, could be highly beneficial for continuing this analysis. They could provide additional data sources and offer insights into the effects of external factors. Furthermore, they could help refine the research questions to ensure that the results obtained from the analysis are valuable to them.
 
 \newpage
 
