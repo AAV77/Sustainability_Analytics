@@ -1,7 +1,7 @@
 ---
 title: "Evaluation of Variable Renewable Energy Source's 
 contribution to cost of control energy"
-author: "Del Conte, Küng, van Lengerich, Vayloyan "
+author: "Del Conte, Küng, van Lengerich, Vayloyan"
 date: "2024-09-30"
 output:
   pdf_document:
@@ -1585,7 +1585,8 @@ If we were to continue the analysis, the next steps would involve reversing the 
 \newpage
 
 # Conclusions, Limitations and Outlook
-## Conclusions
+\subsection*{Conclusions}
+
 In this report parts of the complex system of energy production was analyzed.
 
 The electricity consumption and production per type was studied in Switzerland with the focus on Wind and Solar power as Variable Renewable Energy Sources (VRES). The production of the VRES has been steadily growing in the past years, while displaying a clear pattern of seasonality dominated by the Solar production.
@@ -1594,7 +1595,8 @@ The cost of control energy was analyzed using the data provided by Swissgrid. Th
 
 **Add text about time series results, influence VRES on Control costs, what was done in the last parts**
 
-## Limitations
+\subsection*{Limitations}
+
 The complexity of the system, as described in Chapter 2.2, constitutes a big challenge in the analysis of interactions within the system of energy production. There are many external factors that influence the electricity and control energy prices. This showed very pronounced in the analysis of the day-ahead electricity prices performed in Chapter\ 5.5. 
 
 A limitation when looking at the control energy costs is the focus on the activated control energy. This is only part of the cost for Swissgrid and therefore the end-consumer. Another part is the cost for the capacity provision. For this cost no raw data was found but the cost is shown in a yearly report from the Federal Electricity Commission (ElCom)[^ELCOM-R-2022]. Those costs vary from approximately 50 - 200 Mio CHF from 2015 to 2021 with a sharp increase to almost 500 Mio CHF in 2022, exceeding the costs for the activation analyzed in this report.
@@ -1622,13 +1624,13 @@ https://www.youtube.com/watch?v=KYGUG217PYY
 
 https://www.swissgrid.ch/en/home/newsroom/dossiers/crowd-balancing-platform.html
 
-## Outlook
+\subsection*{Outlook}
+
 **go further with Time-Series..**
 
 **Work closer together with Stakeholder Swissgrid for example (get more data, get specific questions to adress)**
 
 In this report the focus was set on Switzerland but he electricity market in Europe is very interdependent. The consideration of data about neighboring countries and transfers between the countries might give further insights and improve predictions on the cost of control energy.
-
 
 \newpage
 
